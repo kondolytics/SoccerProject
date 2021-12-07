@@ -1,0 +1,520 @@
+---
+title: What makes a player valuable? How does a player contribute to a win?
+author: "Nicholas Kondo"
+subtitle:  
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+---
+```{r setup, include=FALSE}
+
+# Please leave this code chunk as is. It makes some slight formatting changes to alter the output to be more aesthetically pleasing. 
+
+library(knitr)
+
+# Change the number in set seed to your own favorite number
+set.seed(4)
+options(width=70)
+options(scipen=99)
+
+
+# this sets text outputted in code chunks to small
+opts_chunk$set(tidy.opts=list(width.wrap=50),tidy=TRUE, size = "vsmall")  
+opts_chunk$set(message = FALSE,                                          
+               warning = FALSE,
+               # "caching" stores objects in code chunks and only rewrites if you change things
+               cache = TRUE,                               
+               # automatically downloads dependency files
+               autodep = TRUE,
+               # 
+               cache.comments = FALSE,
+               # 
+               collapse = TRUE,
+               # change fig.width and fig.height to change the code height and width by default
+               fig.width = 5.5,  
+               fig.height = 4.5,
+               fig.align='center')
+
+
+```
+
+```{r setup-2, include=FALSE }
+# Always print this out before your assignment
+sessionInfo()
+getwd()
+setwd("/Users/nickkondo/OneDrive - Chapman University/R/Shaun Harris")
+```
+
+```{r setup-3, include=FALSE}
+# loading all libraries
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(worldfootballR)
+library(dplyr)
+library(tidyverse)
+library(worldfootballR)
+library(utils)
+library(rsample)
+library(glmnet)
+library(glmnetUtils)
+library(forcats)
+library(rsample)
+library(ggplot2)
+library(sjPlot)
+```
+
+
+```{r, include=FALSE}
+# This package scraps data from a few different websites.  
+# To connect players URLs on FBref and TransferMarkt, we use this function.  
+mapped_players <- player_dictionary_mapping()
+glimpse(mapped_players)
+
+```
+
+## Introduction
+A professional development soccer team's goal is to find the best players around the world for the lowest dollars.  Our goal is to identify under-valued players, or players who perform extremely high with a low market price.  We will do this by building a model to see what about performance is correlated with market price?  Is it goals? Assists? Both?  Is there a way for us to create an efficiency metric?
+
+## Loading the Datasets
+Season statistics and current market values are taken from FBref.com from the years 2018 to 2020.  
+
+They include seasonal statistics from the Big 5 leagues.  The type of tables included are standard, shooting, passing, passing types, goal creation, defense, possession, playing time, and miscellaneous.  
+```{r}
+
+standard <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "standard", team_or_player = "player")
+
+shooting <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "shooting", team_or_player = "player")
+
+passing <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "passing", team_or_player = "player")
+
+passingtypes <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "passing_types", team_or_player = "player")
+
+gca <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "gca", team_or_player = "player")
+```
+
+```{r}
+defense <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "defense", team_or_player = "player")
+possession <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "possession", team_or_player = "player")
+misc <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "misc", team_or_player = "player")
+playingtime <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "playing_time", team_or_player = "player")
+keepers <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "keepers", team_or_player = "player")
+keepers_adv <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "keepers_adv", team_or_player = "player")
+```
+Retrieving the market values
+```{r}
+market_values17 <- get_player_market_values(country_name = c("England", "Spain", "France", "Italy", "Germany"), start_year = 2017)
+```
+
+```{r}
+market_values18 <- get_player_market_values(country_name = c("England", "Spain", "France", "Italy", "Germany"), start_year = 2018)
+```
+
+```{r}
+market_values19 <- get_player_market_values(country_name = c("England", "Spain", "France", "Italy", "Germany"), start_year = 2019)
+
+marketvalues <- bind_rows(market_values17, market_values18, market_values19)
+
+```
+
+## Joining the data sets
+
+**Creating a unique identifier**
+Here we are creating a unique identifier to each table so when we merge the tables, they will be merged by a unique.  We combine Name, Year, and League Competition to 
+
+Here we are creating a unique identifier to each table and then combining all of the tables into one huge data set with all of our variables.  For now we are excluding goal keepers.
+```{r}
+
+marketvalues <- marketvalues %>% 
+  mutate(Season_End_Year = season_start_year + 1,
+         PlayerYearComp_id = paste(player_name, Season_End_Year, comp_name))
+
+standard <- standard %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+shooting <- shooting %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+passing <- passing %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+passingtypes <- passingtypes %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+gca <- gca %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+defense <- defense %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+possession <- possession %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+playingtime <- playingtime %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+misc <- misc %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+```
+
+**Joining Data Sets**
+Now that we have a unique identifier, let's join our statistics tables with our market values tables.  We are going to keep each table separate for now.  We are also adding a suffix to deal with our variables that are duplicate.  For one duplicate variable, no suffix ("") will be added to the end.  In the second duplicate variable, REMOVEDUPLICATE will be added to the end.  Then we are going to remove our unused variables.  
+```{r}
+
+# Offense
+
+## Standard, Shooting, and GCA
+standardMarket <- inner_join(x = standard,
+                             y = marketvalues,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+shootingMarket <- inner_join(x = shooting,
+                             y = marketvalues,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+gcaMarket <- inner_join(x = gca,
+                             y = marketvalues,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+StdShootMkt <- left_join(x = standardMarket,
+                             y = shootingMarket,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+StdShootGCAMkt <- inner_join(x = StdShootMkt,
+                             y = gcaMarket,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+StdShootGCAMkt <- StdShootGCAMkt %>% 
+  distinct(PlayerYearComp_id, .keep_all = TRUE)
+
+## Passing and Market Values
+passingMarket <- inner_join(x = passing,
+                             y = marketvalues,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+# Joining Passing Types and Market Values
+passingtypesMarket <- inner_join(x = passingtypes,
+                             y = marketvalues,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+# Joining Passing, Passing Types, and Market
+PassMkt <- inner_join(x = passingMarket,
+                             y = passingtypesMarket,
+                              by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+# Joining Standard, Shooting, GCA, Passing, Market
+StdShootGCAPassMkt <- inner_join(x = StdShootGCAMkt,
+                             y = PassMkt,
+                              by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+# Joining Playing time and Market
+playingtimeMarket <- inner_join(x = playingtime,
+                             y = marketvalues,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+# Joining Standard, Shooting, GCA, Passing, Playing Time, and Market
+# Storing this as offense
+offense_stats <- inner_join(x = StdShootGCAPassMkt,
+                             y = playingtimeMarket,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+# Removing Duplicate rows
+offense_stats <- offense_stats %>% 
+  distinct(PlayerYearComp_id, .keep_all = TRUE)
+
+# Removing unneccessary DFs
+rm(StdShootGCAPassMkt, StdShootGCAMkt, playingtimeMarket, passingtypesMarket, passingMarket, PassMkt, standardMarket, shootingMarket, gcaMarket,  StdShootMkt)
+
+# defense
+defenseMarket <- inner_join(x = passing,
+                             y = marketvalues,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+miscMarket <- inner_join(x = passing,
+                             y = marketvalues,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+```
+
+**Removing Repeated Variables**
+Removing duplicate variables (columns)
+```{r}
+offense_stats <- offense_stats %>% select(-contains("REMOVEDUPLICATE"))
+```
+
+Here we are separating the position variable into `primary_position` and `secondary_position`.  If a secondary position isn't listed, `NA` will be returned.
+```{r}
+
+offense_stats <- offense_stats %>% 
+  separate(Pos,c("primary_position", "secondary_position"), ","
+           , remove = FALSE)
+```
+
+
+**Creating a separate data set for each position** 
+
+Now let's create separate data sets for each position (excluding goal keepers)
+```{r}
+
+# Filtering for only Forwards
+forwards <- offense_stats %>% 
+  filter(primary_position == 'FW')
+
+# Changing all variables to factr variables
+forwards <- as.data.frame(unclass(forwards),                     
+                            stringsAsFactors = TRUE)
+
+midfielders <- offense_stats %>% 
+  filter(primary_position == 'MF')
+midfielders <- as.data.frame(unclass(midfielders),    
+                             stringsAsFactors = TRUE)
+```
+
+
+Do we want to do any more filtering here?  Do we want to perhaps filter minutes played?  Let's focus on the forwards table, let's take a look at our data.  We see that we the maximum minutes played is 3,420 minutes and the minimum minutes played is 1 minute.  We have a median of about 1196 minutes and a 1st Quartile of 391 minutes.  Should players with very little minutes be filtered out?  If so, what is the threshold for minutes played in an entire season to be included in this data set. 
+
+*After talking it over with the group, we made the decision to create a minimum minutes played in a season as 20 minutes per match played*
+
+300-350
+
+```{r}
+summary(forwards$Min_Playing)
+```
+
+
+offense_clean <- offense_stats %>% 
+```{r}
+glimpse(offense_stats)
+
+# Removing the players who do not reach 350 minutes
+offense_clean <- offense_stats %>% 
+  filter(Mn_per_MP_Playing.Time > 20)
+
+# We go from 5,466 players to 4,993
+
+```
+
+
+Creating a new clean data set to store only the variables we care about and are interested in testing
+```{r}
+offense_clean2 <- offense_clean %>% 
+  select(PlayerYearComp_id, Player, Squad, Comp, Season_End_Year, primary_position, player_position, Age, 
+         Min_Playing, G_minus_PK, 'G+A_minus_PK_Per', Ast, xG_Expected, npxG_Expected, xA_Expected, 'npxG+xA_Expected', 
+         xG_Per, xA, xA_Per, 'xG+xA_Per', npxG_Per, 'npxG+xA_Per', player_height_mtrs, joined_from,
+         player_market_value_euro, Gls, Sh_per_90_Standard, G_per_Sh_Standard, Dist_Standard, npxG_per_Sh_Expected)
+```
+
+We want to know the most highly correlated between G_minus_PK, 'G+A_minus_PK_Per', xG_Expected, npxG_Expected, xA_Expected, 'npxG+xA_Expected', xG_Per, xA_Per, 'xG+xA_Per', npxG_Per, 'npxG+xA_Per' since all these variables are correlated.  To see which one is most associated with market value, we are going to run separate linear regressions on each variable.
+
+
+CODE START 
+**Need to rename the variables with a + sign** 
+From this quick regression, G minus PK actually has the highest correlation between these.  
+
+
+
+## Goals minus PK + xA
+mod2 <- lm(player_market_value_euro ~ G_minus_PK + xA + npxG_per_Sh_Expected,
+           data = offense_clean2)
+tab_model(mod2)
+# .321 
+# Non Penalty Goals per Shot increased our R Squared to .33 but the variable was not significant 
+
+# Goals minus PK
+mod1 <- lm(player_market_value_euro ~ G_minus_PK,
+           data = offense_clean2)
+tab_model(mod1)
+# .275
+
+G_plus_A_minus_PK_Per
+
+mod1 <- lm(player_market_value_euro ~ G_plus_A_minus_PK_Per,
+           data = offense_clean2)
+tab_model(mod1)
+# .202
+
+## Goals 
+mod1 <- lm(player_market_value_euro ~ Gls,
+           data = offense_clean2)
+tab_model(mod1)
+# .265 
+# Goals minus PK is a better indicator than goals.  We can throw goals out
+
+## Non Penalty xG 
+mod1 <- lm(player_market_value_euro ~ npxG_Expected,
+           data = offense_clean2)
+tab_model(mod1)
+#.244
+# non penalty xG is actually a better indicator than xG by itself 
+
+## xG 
+mod1 <- lm(player_market_value_euro ~ xG_Expected,
+           data = offense_clean2)
+tab_model(mod1)
+# .233
+# Goals minus Pk better than xG
+
+## Non Penalty xG + xA 
+mod1 <- lm(player_market_value_euro ~ `npxG+xA_Expected`,
+           data = offense_clean2)
+tab_model(mod1)
+# .294
+
+npxG_per_Sh_Expected
+
+mod1 <- lm(player_market_value_euro ~ npxG_per_Sh_Expected,
+           data = offense_clean2)
+tab_model(mod1)
+
+
+## xA
+mod1 <- lm(player_market_value_euro ~ xA,
+           data = offense_clean2)
+tab_model(mod1)
+# .224
+
+# Assists
+mod1 <- lm(player_market_value_euro ~ Ast,
+           data = offense_clean2)
+tab_model(mod1)
+#.214 
+
+
+# xG + xA per 90 minutes
+mod1 <- lm(player_market_value_euro ~ `xG+xA_Per`,
+           data = offense_clean2)
+tab_model(mod1)
+# .168
+
+# Non-Penalty xG + xA per 90 minutes
+mod1 <- lm(player_market_value_euro ~ `npxG+xA_Per`,
+           data = offense_clean2)
+tab_model(mod1)
+# .165
+
+# xG per 90 minutes
+mod1 <- lm(player_market_value_euro ~ xG_Per,
+           data = offense_clean2)
+tab_model(mod1)
+#.128
+
+mod1 <- lm(player_market_value_euro ~ xA_Per,
+           data = offense_clean2)
+tab_model(mod1)
+# .127
+
+
+mod1 <- lm(player_market_value_euro ~ xG,
+           data = offense_clean2)
+tab_model(mod1)
+
+
+# Total is more highly correlated than per 90 
+
+mod1 <- lm(player_market_value_euro ~ xA_Per,
+           data = offense_clean2)
+tab_model(mod1)
+# .127
+
+mod1 <- lm(player_market_value_euro ~ npxG_Per,
+           data = offense_clean2)
+tab_model(mod1)
+# .122
+
+
+
+
+# Goals per Shot
+mod1 <- lm(player_market_value_euro ~ G_per_Sh_Standard,
+           data = offense_clean2)
+tab_model(mod1)
+# .029
+
+mod1 <- lm(player_market_value_euro ~ npxG_per_Sh_Expected,
+           data = offense_clean2)
+tab_model(mod1)
+# .024
+
+mod2 <- lm(player_market_value_euro ~ G_minus_PK + xA,
+           data = offense_clean2)
+tab_model(mod1)
+# .32
+
+CODE END
+
+
+
+
+
+
+Deliverable 
+
+The deliverable will be in the form of an HTML file (website link) where we will be able to publish our findings.  We can include as much text, code, output, and charts that we want.  Here is a draft of how I plan on introducing our topic.
+
+First we are finding out who is being paid the most and why?  What do teams pay for?  Is it Performance? Age? Both? Why are player market values the way they are?
+
+We are going to create a model for predicting the market value of player based on previous market prices and performance statistics.  From this, we can identify players who are performing extremely well and being under-paid and therefore 'undervalued'.  Our goal is to put the best 11 players on the field for the lowest amount of money.  We can do this by identifying the most undervalued player at each position.  
+
+Predicted market price - actual market price = Value 
+
+
+Next Steps:
+Interpret the regressions
+Make one final model with the highest performance
+Work on visuals
+Create HTML file to outline data?
+
+
+OLD NOTES
+
+
+
+**Standard Table**
+Should we create separate tables for each league and then one of our variables can be squad.  Or just include all leagues.  
+
+Do we want to use regular stats or non penalty stats?  
+In my model, I use non-penalty scores because penalty kicks are dependent on the other team.  How do we feel about this.
+
+We can either use goals and assists as separate variables, or we can use goals+assists as one predictor variable.  To answer this question, I will create two models and see which one is a better predictor of +/-.
+
+Should we use variables on a per 90 minute basis?  
+I decided to go with per 90 minute variables.  To normalize our players, let's use all variables on a per 90 minute basis.  It will be extremely important to trim players that don't fit the minute threshold.  To qualify as a leader, a player needs to play 30 minutes per squad game on FBref.
+**We are going to use Minutes per match played**
+20 
+
+
+Do we want to use xG and xA or G and A.  What is a better predictor of +/-, what about value on transfer market?
+**The break out players that are going above expected **
+
+**New Feature**
+G - xG = goals over expected 
+
+There are other variables such as xGplus_per_minus_90
+Expected goals scored minus expected goals allowed
+
+We also have xG expected 
+
+**Squad**
+  -Nation
+  -Player
+
+**Age**
+  -Born
+
+**Mins_Per_90_Playing**
+  -Min_Playing
