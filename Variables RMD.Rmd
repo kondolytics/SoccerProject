@@ -40,12 +40,11 @@ opts_chunk$set(message = FALSE,
 
 ```
 
-```{r setup-2}
+```{r setup-2, include=FALSE}
 
 # Always print this out before your assignment
 sessionInfo()
 getwd()
-setwd("/Users/nickkondo/OneDrive - Chapman University/BUS 696")
 
 ```
 
@@ -56,24 +55,457 @@ setwd("/Users/nickkondo/OneDrive - Chapman University/BUS 696")
 <!-- Be sure to submit both your .Rmd file and the compiled .html or .pdf file for full credit -->
 
 
-```{r setup-3, include = FALSE}
-
-# load all your libraries in this chunk 
-library('tidyverse')
-library('dplyr')
-library('tidyr')
-
-print(variables)
+```{r setup-3, include=FALSE}
+# loading all libraries
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(worldfootballR)
+library(dplyr)
+library(tidyverse)
+library(worldfootballR)
+library(utils)
+library(rsample)
+library(glmnet)
+library(glmnetUtils)
+library(forcats)
+library(rsample)
+library(ggplot2)
+library(sjPlot)
 
 # note, do not run install.packages() inside a code chunk. install them in the console outside of a code chunk. 
+```
 
+# Introduction 
+
+For this study, data was collected from FBref.com on the "Big 5" Leagues.  Our data includes statistics in categories such as standard, shooting, passing, goal and shot creation, defense, miscellaneous, playing time, and market values.  We compare a player's statistics with their market values listed on TransfrMarket.com and find the statistics that are most correlated with a player's market values.  In other words, we are aiming to find the certain statistics that makes a player valuable.  
+
+```{r,include=FALSE}
+
+#Loading the data sets 
+
+standard <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "standard", team_or_player = "player")
+
+shooting <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "shooting", team_or_player = "player")
+
+passing <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "passing", team_or_player = "player")
+
+passingtypes <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "passing_types", team_or_player = "player")
+
+gca <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "gca", team_or_player = "player")
+```
+
+```{r, include=FALSE}
+defense <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "defense", team_or_player = "player")
+possession <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "possession", team_or_player = "player")
+misc <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "misc", team_or_player = "player")
+playingtime <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "playing_time", team_or_player = "player")
+keepers <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "keepers", team_or_player = "player")
+keepers_adv <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "keepers_adv", team_or_player = "player")
+```
+
+Retrieving the market values
+```{r, include=FALSE}
+# Loading the market values
+
+market_values17 <- get_player_market_values(country_name = c("England", "Spain", "France", "Italy", "Germany"), start_year = 2017)
 ```
 
 
-```{r}
+```{r, include=FALSE}
 
+# Renaming the variables
 
+standard <- standard %>% 
+  rename(Matches_PLayed = MP_Playing,
+         Starts = Starts_Playing,
+         Min = Min_Playing,
+         Min_per_90 = Mins_Per_90_Playing,
+         xG = xG_Expected,
+         npxG = npxG_Expected,
+         xA = xA_Expected,
+         'npxG+xA' = 'npxG+xA_Expected')
+    
+shooting <- shooting %>% 
+  rename(Gls = Gls_Standard,
+         Sh = Sh_Standard,
+         SoT = SoT_Standard,
+         SoT_percent = SoT_percent_Standard,
+         SoT_per_90 = SoT_per_90_Standard,
+         Sh_per_90_Standard = Sh_per_90_Standard,
+         SoT_per_90 = SoT_per_90_Standard,
+         G_per_Sh = G_per_Sh_Standard,
+         G_per_SoT = G_per_SoT_Standard,
+         Dist = Dist_Standard,
+         FK = FK_Standard,
+         PK = PK_Standard,
+         PKatt = PKatt_Standard,
+         xG = xG_Expected,
+         npxG = npxG_Expected,
+         npxG_per_Sh = npxG_per_Sh_Expected,
+         G_minus_xG = G_minus_xG_Expected,
+         npG_minus_xG = 'np:G_minus_xG_Expected')
 
+defense <- defense %>% 
+  rename(
+Tkl = Tkl_Tackles,
+TklW = TklW_Tackles,
+Def_3rd = 'Def 3rd_Tackles',
+Mid_3rd = 'Mid 3rd_Tackles',
+Att_3rd = 'Att 3rd_Tackles',
+Tkl_vs_dribble = Tkl_Vs,
+Att_vs_dribble = Att_Vs,
+Successful_Pressure_Percent = Tkl_percent_Vs,
+Def_3rd_Pressures = 'Def 3rd_Pressures',
+Mid_3rd_Pressures = 'Mid 3rd_Pressures',
+Att_3rd_Pressures = 'Att 3rd_Pressures',
+Blocks = Blocks_Blocks)
 
+possession <- possession %>% 
+  rename(
+    Touches = Touches_Touches,
+    Def_3rd_Touches = 'Def 3rd_Touches',
+    Mid_3rd_Touches = 'Mid 3rd_Touches',
+    Att_3rd_Touches = 'Att 3rd_Touches',
+    Att_Pen_Touches = 'Att Pen_Touches',
+    Carries = Carries_Carries)
 ```
+
+
+# Appendix 
+
+## Standard
+
+`Season_End_Year`: The year at the end of the season.
+
+`Squad`: The team the player plays on.
+
+`Player`: The name of the player.
+
+`Nation`: Nationality of the Player.
+
+`Pos`: The player's position
+
+`Age`: Current Age
+
+`Born`: Year of Birth
+
+`Matches_Played`:
+
+`Starts`: Games Started
+
+`Min`: Minutes Played
+
+`Min_per_90`: Minutes Played divided by 90 
+
+`Gls`: Goals 
+
+`Ast`: Assists
+
+`G_minus_PK`: Goals minus Penalty Kicks
+
+`PK`: Penalty Kicks Made
+
+`PKatt`: Penalty Kicks Attempted
+
+`CrdY`: Yellow cards
+
+`CrdR`: Red Cards
+
+`Gls_Per`: Goals Scored per 90 minutes
+
+`Ast_Per`: Assists per 90 minutes
+
+`G+A_Per`: Goals and Assists per 90 minutes 
+
+`G_minus_PK_Per`: Goals minus Penalty Kicks per 90 minutes 
+
+`G+A_minus_PK_Per`: Goals and Assists minus Penalty Kicks per 90 minutes 
+
+`xG`: Expected Goals
+
+`npxG`: Non-Penalty Expected Goals
+
+`xA`: xG Assisted
+
+`npxG+xA`: Non Penalty Expected Goals plus xG Assisted
+
+`xG_Per`: Expected Goals per 90 minutes
+
+`xA_Per`: xG Assisted per 90 minutes
+
+`xG+xA_Per`: Expected Goals plus Assist per 90 minutes
+
+`npxG_Per`: Non-Penalty Expected Goals per 90 minutes
+
+`npxG+xA_Per`: Non-Penalty Expected Goals plus xG Assisted per 90 minutes
+
+## Goalkeeping - Luke 
+
+### Advanced Goalkeeping - Luke
+
+## Shooting - Darron
+
+`Season_End_Year`: The year at the end of the season.
+
+`Squad`: The team the player plays on.
+
+`Player`: The name of the player.
+
+`Nation`: Nationality of the Player.
+
+`Pos`: The player's position
+
+`Age`: Current Age
+
+`Born`: Year of Birth
+
+`Mins_per_90`: 
+
+`Gls`: 
+
+`SH`: 
+
+`SoT`: 
+
+`SoT_percent`: 
+
+`Sh_per_90`: 
+
+`Sot_per_90`: 
+
+`G_per_Sh`: 
+
+`G_per_SoT`: 
+
+`Dist`: 
+
+`FK`: 
+
+`PK`: 
+
+`PKatt`: 
+
+`xG`: 
+
+`npxG`: 
+
+`npxG_per_Sh`: 
+
+`G_minus_xG`: 
+
+`npG_minus_npxG`: 
+
+## Passing - Luke 
+
+## Pass Types - Luke 
+
+## Goal and Shot Creation - Luke 
+
+## Defensive Actions - Darron
+
+`Season_End_Year`:
+
+`Squad`:
+
+`Comp`:
+
+`Player`:
+
+`Nation`:
+
+`Pos`:
+
+`Age`:
+
+`Born`:
+
+`Mins_Per_90`:
+
+`Tkl`:
+
+`TklW`:
+
+`Def_3rd`:
+
+`Mid_3rd`:
+
+`Att_3rd`:
+
+`Tkl_vs_dribble`:
+
+`Att_vs_dribble`:
+
+`Press_Pressures`:
+
+`Succ_Pressures`:
+
+`Successful_Pressure_Percent`:
+
+`Def_3rd_Pressures`:
+
+`Mid_3rd_Pressures`:
+
+`Att_3rd_Pressures`:
+
+`Blocks`:
+
+`Sh_Blocks`:
+
+`ShSv_Blocks`:
+
+`Pass_Blocks`:
+
+`Int`:
+
+`Tkl+Int`:
+
+`Clr`:
+
+`Err`:
+
+## Possessions - Darron 
+
+`Season_End_Year`:
+
+`Squad`:
+
+`Comp`:
+
+`Player`:
+
+`Nation`:
+
+`Pos`:
+
+`Age`:
+
+`Born`:
+
+`Touches`:
+
+`Def_Pen`:
+
+`Def_3rd_Touches`:
+
+`Mid_3rd_Touches`:
+
+`Att_3rd_Touches`:
+
+`Att_Pen_Touches`:
+
+`Live_Touches`:
+
+`Succ_Dribbles`:
+
+`Att_Dribbles`:
+
+`Succ_percent_Dribbles`:
+
+`#Pl_Dribbles`:
+
+`Megs_Dribbles`:
+
+`Carries`:
+
+`TotDist_Carries`:
+
+`PrgDist_Carries`:
+
+`Prog_Carries`:
+
+`Final_Third_Carries`:
+
+`Prog_Carries`:
+
+`Final_Third_Carries`:
+
+`CPA_Carries`:
+
+`Mis_Carries`:
+
+`Dis_Carries`:
+
+`Targ_Receiving`:
+
+`Rec_Receiving`:
+
+`Rec_percent_Receiving`:
+
+`Prog_Receiving`:
+
+
+## Playing Time - Nick 
+
+`Season_End_Year`:
+
+`Squad`:
+
+`Comp`:
+
+`Player`:
+
+`Nation`:
+
+`Pos`:
+
+`Age`:
+
+`Born`:
+
+`MP`:
+
+`Min`:
+
+`Min_per_MP`:
+
+`Min_percent_Playing.Time`:
+Mins_per_90
+Starts
+Mn_per_Start
+
+
+
+`Mins_per_90`:
+
+`Starts`:
+
+`Mn_per_Start`:
+
+`Compl`:
+
+`Subs`:
+
+`Mn_per_Sub`:
+
+`Mn_per_Sub`:
+
+`unSub`:
+
+`PPM`:
+
+`onG`:
+
+`onGA`:
+
+`plus_per_minus`:
+
+`plus_per_minus_per_90`:
+
+`On_minus_Off`:
+
+`onxG`:
+
+`onxGA`:
+
+`xGplus_per_minus`:
+
+`xGplus_per_minus_per_90`:
+
+`xGplus_per_minus_per_90:`
+
+# Misc - Nick 
+
+# Market Values Table - Nick 
+
 
