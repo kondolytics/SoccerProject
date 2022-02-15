@@ -294,6 +294,70 @@ possession <- possession %>%
 
 ### Advanced Goalkeeping - Luke
 
+`Season_End_Year`: The year at the end of the season.
+
+`Squad`: The team the player plays on.
+
+`Player`: The name of the player.
+
+`Nation`: Nationality of the Player.
+
+`Pos`: The player's position
+
+`Age`: Current Age
+
+`Born`: Year of Birth
+
+`Min_per_90`: Year of Birth
+
+`GA`: Year of Birth
+
+`PKA`: Year of Birth
+
+`FK`: Year of Birth
+
+`CK`: Year of Birth
+
+`OG`: Year of Birth
+
+`PSxG`: Year of Birth
+
+`PSxG_per_SoT`: Year of Birth
+
+`PSxG_plus_minus`: Year of Birth
+
+`per_90`: Year of Birth
+
+`Cmp_Launched`: Year of Birth
+
+`Att_Launched`: Year of Birth
+
+`Cmp_percent_Launched`: Year of Birth
+
+`Att_Passes`: Year of Birth
+
+`Thr_Passes`: Year of Birth
+
+`Launch_percent_Passes`: Year of Birth
+
+`AvgLen_Passes`: Year of Birth
+
+`Att_Goal`: Year of Birth
+
+`Launch_percent_Goal`: Year of Birth
+
+`AvgLen_Goal`: Year of Birth
+
+`Opp_Crosses`: Year of Birth
+
+`Stp_percent_Crosses`: Year of Birth
+
+`#OPA_Sweeper`: Year of Birth
+
+`#OPA_per_90_Sweeper`: Year of Birth
+
+`AvgDist_Sweeper`: Year of Birth
+
 ## Shooting - Darron
 
 `Season_End_Year`: The year at the end of the season.
