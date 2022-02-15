@@ -699,11 +699,6 @@ possession <- possession %>%
 `Min_per_MP`:
 
 `Min_percent_Playing.Time`:
-Mins_per_90
-Starts
-Mn_per_Start
-
-
 
 `Mins_per_90`:
 
