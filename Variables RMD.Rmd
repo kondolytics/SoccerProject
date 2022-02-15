@@ -412,6 +412,64 @@ possession <- possession %>%
 
 ## Passing - Luke 
 
+`Season_End_Year`: The year at the end of the season.
+
+`Squad`: The team the player plays on.
+
+`Player`: The name of the player.
+
+`Nation`: Nationality of the Player.
+
+`Pos`: The player's position
+
+`Age`: Current Age
+
+`Born`: Year of Birth
+
+`Mins_per_90`: 
+
+`Cmp`: 
+
+`Cmp_percent`: 
+
+`TotDist`: 
+
+`PrgDist`: 
+
+`Cmp_short`: 
+
+`Att_short`: 
+
+`Cmp_percent_Short`: 
+
+`Cmp_Medium`: 
+
+`Att_Medium`: 
+
+`Cmp_percent_Medium`: 
+
+`Cmp_Long`: 
+
+`Att_Long`: 
+
+`Cmp_percent_Long`: 
+
+`Ast`: 
+
+`xA`: 
+
+`A_minus_xA`: 
+
+`KP`: 
+
+`Final_Third`: 
+
+`PPA`:
+
+`CrsPA`:
+
+`Prog`:
+
 ## Pass Types - Luke 
 
 ## Goal and Shot Creation - Luke 
