@@ -242,6 +242,56 @@ possession <- possession %>%
 
 ## Goalkeeping - Luke 
 
+`Season_End_Year`: The year at the end of the season.
+
+`Squad`: The team the player plays on.
+
+`Player`: The name of the player.
+
+`Nation`: Nationality of the Player.
+
+`Pos`: The player's position
+
+`Age`: Current Age
+
+`Matches_Played`: Matches Played
+
+`Starts`: Games Started
+
+`Min`: Minutes Played
+
+`Min_per_90`: Minutes Played divided by 90 
+
+`GA`: Year of Birth
+
+`GA90`: Year of Birth
+
+`SoTA`: Year of Birth
+
+`Saves`: Year of Birth
+
+`Save_percent`: Year of Birth
+
+`W`: Year of Birth
+
+`D`: Year of Birth
+
+`L`: Year of Birth
+
+`CS`: Year of Birth
+
+`CS_percent`: Year of Birth
+
+`PKatt_Penalty`: Year of Birth
+
+`PKA_Penalty`: Year of Birth
+
+`PKsv_Penalty`: Year of Birth
+
+`PKm_Penalty`: Year of Birth
+
+`Save_percent_Penalty`: Year of Birth
+
 ### Advanced Goalkeeping - Luke
 
 ## Shooting - Darron
