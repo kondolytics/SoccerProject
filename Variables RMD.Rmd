@@ -176,9 +176,11 @@ possession <- possession %>%
 
 ## Standard
 
-`Season_End_Year`: The year at the end of the season.
+``Season_End_Year`: The year at the end of the season.
 
 `Squad`: The team the player plays on.
+
+`Comp`: The league the player plays in.
 
 `Player`: The name of the player.
 
@@ -190,7 +192,7 @@ possession <- possession %>%
 
 `Born`: Year of Birth
 
-`Matches_Played`:
+`Matches_Played`: Matches Played
 
 `Starts`: Games Started
 
@@ -246,6 +248,8 @@ possession <- possession %>%
 
 `Squad`: The team the player plays on.
 
+`Comp`: The league the player plays in.
+
 `Player`: The name of the player.
 
 `Nation`: Nationality of the Player.
@@ -253,6 +257,8 @@ possession <- possession %>%
 `Pos`: The player's position
 
 `Age`: Current Age
+
+`Born`: Year of Birth
 
 `Matches_Played`: Matches Played
 
@@ -262,35 +268,35 @@ possession <- possession %>%
 
 `Min_per_90`: Minutes Played divided by 90 
 
-`GA`: Year of Birth
+`GA`: 
 
-`GA90`: Year of Birth
+`GA90`: 
 
-`SoTA`: Year of Birth
+`SoTA`: 
 
-`Saves`: Year of Birth
+`Saves`: 
 
-`Save_percent`: Year of Birth
+`Save_percent`: 
 
-`W`: Year of Birth
+`W`: 
 
-`D`: Year of Birth
+`D`:
 
-`L`: Year of Birth
+`L`: 
 
-`CS`: Year of Birth
+`CS`: 
 
-`CS_percent`: Year of Birth
+`CS_percent`: 
 
-`PKatt_Penalty`: Year of Birth
+`PKatt_Penalty`: 
 
-`PKA_Penalty`: Year of Birth
+`PKA_Penalty`: 
 
-`PKsv_Penalty`: Year of Birth
+`PKsv_Penalty`: 
 
-`PKm_Penalty`: Year of Birth
+`PKm_Penalty`: 
 
-`Save_percent_Penalty`: Year of Birth
+`Save_percent_Penalty`: 
 
 ### Advanced Goalkeeping - Luke
 
@@ -298,6 +304,8 @@ possession <- possession %>%
 
 `Squad`: The team the player plays on.
 
+`Comp`: The league the player plays in.
+
 `Player`: The name of the player.
 
 `Nation`: Nationality of the Player.
@@ -308,55 +316,55 @@ possession <- possession %>%
 
 `Born`: Year of Birth
 
-`Min_per_90`: Year of Birth
+`Min_per_90`: 
 
-`GA`: Year of Birth
+`GA`: 
 
-`PKA`: Year of Birth
+`PKA`: 
 
-`FK`: Year of Birth
+`FK`: 
 
-`CK`: Year of Birth
+`CK`:
 
-`OG`: Year of Birth
+`OG`: 
 
-`PSxG`: Year of Birth
+`PSxG`: 
 
-`PSxG_per_SoT`: Year of Birth
+`PSxG_per_SoT`: 
 
-`PSxG_plus_minus`: Year of Birth
+`PSxG_plus_minus`: 
 
-`per_90`: Year of Birth
+`per_90`: 
 
-`Cmp_Launched`: Year of Birth
+`Cmp_Launched`: 
 
-`Att_Launched`: Year of Birth
+`Att_Launched`: 
 
-`Cmp_percent_Launched`: Year of Birth
+`Cmp_percent_Launched`: 
 
-`Att_Passes`: Year of Birth
+`Att_Passes`: 
 
-`Thr_Passes`: Year of Birth
+`Thr_Passes`: 
 
-`Launch_percent_Passes`: Year of Birth
+`Launch_percent_Passes`: 
 
-`AvgLen_Passes`: Year of Birth
+`AvgLen_Passes`: 
 
-`Att_Goal`: Year of Birth
+`Att_Goal`: 
 
-`Launch_percent_Goal`: Year of Birth
+`Launch_percent_Goal`: 
 
-`AvgLen_Goal`: Year of Birth
+`AvgLen_Goal`: 
 
-`Opp_Crosses`: Year of Birth
+`Opp_Crosses`: 
 
-`Stp_percent_Crosses`: Year of Birth
+`Stp_percent_Crosses`: 
 
-`#OPA_Sweeper`: Year of Birth
+`#OPA_Sweeper`: 
 
-`#OPA_per_90_Sweeper`: Year of Birth
+`#OPA_per_90_Sweeper`: 
 
-`AvgDist_Sweeper`: Year of Birth
+`AvgDist_Sweeper`: 
 
 ## Shooting - Darron
 
@@ -364,6 +372,8 @@ possession <- possession %>%
 
 `Squad`: The team the player plays on.
 
+`Comp`: The league the player plays in.
+
 `Player`: The name of the player.
 
 `Nation`: Nationality of the Player.
@@ -374,7 +384,7 @@ possession <- possession %>%
 
 `Born`: Year of Birth
 
-`Mins_per_90`:
+`Mins_per_90`: 
 
 `Gls`: 
 
@@ -415,6 +425,8 @@ possession <- possession %>%
 `Season_End_Year`: The year at the end of the season.
 
 `Squad`: The team the player plays on.
+
+`Comp`: The league the player plays in.
 
 `Player`: The name of the player.
 
@@ -475,6 +487,8 @@ possession <- possession %>%
 `Season_End_Year`: The year at the end of the season.
 
 `Squad`: The team the player plays on.
+
+`Comp`: The league the player plays in.
 
 `Player`: The name of the player.
 
@@ -545,6 +559,8 @@ possession <- possession %>%
 
 `Squad`: The team the player plays on.
 
+`Comp`: The league the player plays in.
+
 `Player`: The name of the player.
 
 `Nation`: Nationality of the Player.
@@ -591,21 +607,21 @@ possession <- possession %>%
 
 ## Defensive Actions - Darron
 
-`Season_End_Year`:
+`Season_End_Year`: The year at the end of the season.
 
-`Squad`:
+`Squad`: The team the player plays on.
 
-`Comp`:
+`Comp`: The league the player plays in.
 
-`Player`:
+`Player`: The name of the player.
 
-`Nation`:
+`Nation`: Nationality of the Player.
 
-`Pos`:
+`Pos`: The player's position
 
-`Age`:
+`Age`: Current Age
 
-`Born`:
+`Born`: Year of Birth
 
 `Mins_Per_90`:
 
@@ -653,21 +669,21 @@ possession <- possession %>%
 
 ## Possessions - Darron 
 
-`Season_End_Year`:
+`Season_End_Year`: The year at the end of the season.
 
-`Squad`:
+`Squad`: The team the player plays on.
 
-`Comp`:
+`Comp`: The league the player plays in.
 
-`Player`:
+`Player`: The name of the player.
 
-`Nation`:
+`Nation`: Nationality of the Player.
 
-`Pos`:
+`Pos`: The player's position
 
-`Age`:
+`Age`: Current Age
 
-`Born`:
+`Born`: Year of Birth
 
 `Touches`:
 
@@ -724,21 +740,21 @@ possession <- possession %>%
 
 ## Playing Time - Nick 
 
-`Season_End_Year`:
+`Season_End_Year`: The year at the end of the season.
 
-`Squad`:
+`Squad`: The team the player plays on.
 
-`Comp`:
+`Comp`: The league the player plays in.
 
-`Player`:
+`Player`: The name of the player.
 
-`Nation`:
+`Nation`: Nationality of the Player.
 
-`Pos`:
+`Pos`: The player's position
 
-`Age`:
+`Age`: Current Age
 
-`Born`:
+`Born`: Year of Birth
 
 `MP`:
 
@@ -788,6 +804,24 @@ possession <- possession %>%
 
 # Misc - Nick 
 
+`Season_End_Year`: The year at the end of the season.
+
+`Squad`: The team the player plays on.
+
+`Comp`: The league the player plays in.
+
+`Player`: The name of the player.
+
+`Nation`: Nationality of the Player.
+
+`Pos`: The player's position
+
+`Age`: Current Age
+
+`Born`: Year of Birth
+
+
 # Market Values Table - Nick 
+
 
 
