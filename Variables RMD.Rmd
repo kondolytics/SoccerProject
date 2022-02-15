@@ -541,6 +541,54 @@ possession <- possession %>%
 
 ## Goal and Shot Creation - Luke 
 
+`Season_End_Year`: The year at the end of the season.
+
+`Squad`: The team the player plays on.
+
+`Player`: The name of the player.
+
+`Nation`: Nationality of the Player.
+
+`Pos`: The player's position
+
+`Age`: Current Age
+
+`Born`: Year of Birth
+
+`Mins_Per_90`:
+
+`SCA_SCA`:
+
+`SCA90__SCA`:
+
+`PassLive_SCA`:
+
+`PassDead_SCA`:
+
+`Drib_SCA`:
+
+`Sh_SCA`:
+
+`Fld_SCA`:
+
+`Def_SCA`:
+
+`GCA_GCA`:
+
+`GCA90_GCA`:
+
+`PassLive_GCA`:
+
+`PassDead_GCA`:
+
+`Drib_GCA`:
+
+`Sh_GCA`:
+
+`Fld_GCA`:
+
+`Def_GCA`:
+
 ## Defensive Actions - Darron
 
 `Season_End_Year`:
