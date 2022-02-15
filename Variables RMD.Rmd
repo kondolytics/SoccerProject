@@ -472,6 +472,73 @@ possession <- possession %>%
 
 ## Pass Types - Luke 
 
+`Season_End_Year`: The year at the end of the season.
+
+`Squad`: The team the player plays on.
+
+`Player`: The name of the player.
+
+`Nation`: Nationality of the Player.
+
+`Pos`: The player's position
+
+`Age`: Current Age
+
+`Born`: Year of Birth
+
+`Mins_Per_90`:
+
+`Att`:
+
+`Live_Pass`:
+
+`Dead_Pass`:
+
+`FK_Pass`:
+
+`TB_Pass`:
+
+`Press_Pass`:
+
+`Sw_Pass`:
+
+`Crs_Pass`:
+
+`CK_Pass`:
+
+`In_Corner`:
+
+`Out_Corner`:
+
+`Str_Corner`:
+
+`Ground_Height`:
+
+`Low_Height`:
+
+`High_Height`:
+
+`Left_Body`:
+
+`Right_Body`:
+
+`Head_Body`:
+
+`TI_Body`:
+
+`Other_Body`:
+
+`Cmp_Outcomes`:
+
+`Off_Outcomes`:
+
+`Out_Outcomes`:
+
+`In_Outcomes`:
+
+`Blocks_Outcomes`:
+
+
 ## Goal and Shot Creation - Luke 
 
 ## Defensive Actions - Darron
