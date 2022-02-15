@@ -1,6 +1,6 @@
 ---
 title: "Variable Names"
-author: "Nicholas Kondo, "
+author: "Nicholas Kondo, Luke Ganalon"
 subtitle: 
 output:
   html_document:
