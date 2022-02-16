@@ -1069,37 +1069,37 @@ We have an adjusted R square of .46 with coefficients
 
 `Mins_Per_90`: Minutes played divided by 90
 
-`SCA_SCA`:
+`SCA_SCA`: Shot-creating Actions
 
-`SCA90__SCA`:
+`SCA90__SCA`: Shot-creating Actions per 90 minutes
 
-`PassLive_SCA`:
+`PassLive_SCA`: Completed live-ball passes that lead to a shot attempt
 
-`PassDead_SCA`:
+`PassDead_SCA`: Completed dead-ball passes that lead to a shot attempt (Includes free kicks, corner kicks, kick offs, throw-ins and goal kicks)
 
-`Drib_SCA`:
+`Drib_SCA`: Successful dribbles that lead to a shot attempt
 
-`Sh_SCA`:
+`Sh_SCA`: Shots that lead to another shot attempt
 
-`Fld_SCA`:
+`Fld_SCA`: Fouls drawn that lead to a shot attempt
 
-`Def_SCA`:
+`Def_SCA`: Defensive actions that lead to a shot attempt
 
-`GCA_GCA`:
+`GCA_GCA`: The offensive actions directly leading to a goal, such as passes, dribbles and drawing fouls
 
-`GCA90_GCA`:
+`GCA90_GCA`: Goal-Creating Actions per 90 minutes
 
-`PassLive_GCA`:
+`PassLive_GCA`: Completed live-ball passes that lead to a goal
 
-`PassDead_GCA`:
+`PassDead_GCA`: Completed dead-ball passes that lead to a goal (Includes free kicks, corner kicks, kick offs, throw-ins and goal kicks)
 
-`Drib_GCA`:
+`Drib_GCA`: Successful dribbles that lead to a goal
 
-`Sh_GCA`:
+`Sh_GCA`: Shots that lead to another goal-scoring shot
 
-`Fld_GCA`:
+`Fld_GCA`: Fouls drawn that lead to a goal
 
-`Def_GCA`:
+`Def_GCA`: Defensive actions that lead to a goal
 
 ### Defensive Actions
 
