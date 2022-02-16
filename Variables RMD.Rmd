@@ -999,55 +999,55 @@ We have an adjusted R square of .46 with coefficients
 
 `Mins_Per_90`: Minutes played divided by 90
 
-`Att`:
+`Att`: Passes Attempted
 
-`Live_Pass`:
+`Live_Pass`: Live-ball passes
 
-`Dead_Pass`:
+`Dead_Pass`: Dead-ball passes such as a free kick or corner kick
 
-`FK_Pass`:
+`FK_Pass`: Passes attempted from freekicks
 
-`TB_Pass`:
+`TB_Pass`: Completed pass sent between back defenders into open space
 
-`Press_Pass`:
+`Press_Pass`: Passes made while under pressure from opponent
 
-`Sw_Pass`:
+`Sw_Pass`: Passes that travel more than 40 yards of the width of the pitch
 
-`Crs_Pass`:
+`Crs_Pass`: Crosses
 
-`CK_Pass`:
+`CK_Pass`: Corner Kicks
 
-`In_Corner`:
+`In_Corner`: Inswinging Corner Kicks
 
-`Out_Corner`:
+`Out_Corner`: Outswinging Corner Kicks
 
-`Str_Corner`:
+`Str_Corner`: Straight Corner Kicks
 
-`Ground_Height`:
+`Ground_Height`: Ground passes
 
-`Low_Height`:
+`Low_Height`: Passes below shoulder-level
 
-`High_Height`:
+`High_Height`: Passes above shoulder-level
 
-`Left_Body`:
+`Left_Body`: Passes attempted using left foot
 
-`Right_Body`:
+`Right_Body`: Passes attempted using right foot
 
-`Head_Body`:
+`Head_Body`: Passes attempted using head
 
-`TI_Body`:
+`TI_Body`: Throw-ins Taken
 
-`Other_Body`:
+`Other_Body`: Passes attempted using body parts other than the player's head or feet
 
-`Cmp_Outcomes`:
+`Cmp_Outcomes`: Passes completed
 
-`Off_Outcomes`:
+`Off_Outcomes`: Offsides
 
-`Out_Outcomes`:
+`Out_Outcomes`: Out of bounds
 
-`In_Outcomes`:
+`In_Outcomes`: Intercepted
 
-`Blocks_Outcomes`:
+`Blocks_Outcomes`: Blocked by an opponent 
 
 ### Goal and Shot Creation - Luke
 
