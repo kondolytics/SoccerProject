@@ -1,3 +1,545 @@
+---
+title: "Variable Names"
+author: "Nicholas Kondo, "
+subtitle: 
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+---
+
+```{r setup, include=FALSE}
+
+# Please leave this code chunk as is. It makes some slight formatting changes to alter the output to be more aesthetically pleasing. 
+
+library(knitr)
+
+# Change the number in set seed to your own favorite number
+set.seed(4)
+options(width=70)
+options(scipen=99)
+
+
+# this sets text outputted in code chunks to small
+opts_chunk$set(tidy.opts=list(width.wrap=50),tidy=TRUE, size = "vsmall")  
+opts_chunk$set(message = FALSE,                                          
+               warning = FALSE,
+               # "caching" stores objects in code chunks and only rewrites if you change things
+               cache = TRUE,                               
+               # automatically downloads dependency files
+               autodep = TRUE,
+               # 
+               cache.comments = FALSE,
+               # 
+               collapse = TRUE,
+               # change fig.width and fig.height to change the code height and width by default
+               fig.width = 5.5,  
+               fig.height = 4.5,
+               fig.align='center')
+
+
+```
+
+```{r setup-2, include=FALSE}
+
+# Always print this out before your assignment
+sessionInfo()
+getwd()
+
+```
+
+```{r setup-3, include=FALSE}
+# loading all libraries
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(worldfootballR)
+library(dplyr)
+library(tidyverse)
+library(worldfootballR)
+library(utils)
+library(rsample)
+library(glmnet)
+library(glmnetUtils)
+library(forcats)
+library(rsample)
+library(ggplot2)
+library(sjPlot)
+library(partykit)
+library(tidyverse)
+library(titanic)
+library(PerformanceAnalytics)
+library(rpart)       
+library(rpart.plot)  
+library(randomForest)
+# note, do not run install.packages() inside a code chunk. install them in the console outside of a code chunk. 
+```
+
+# Introduction
+
+For this study, data was collected from FBref.com on the "Big 5" Leagues. Our data includes statistics in categories such as standard, shooting, passing, goal and shot creation, defense, miscellaneous, playing time, and market values. We compare a player's statistics with their market values listed on TransferMarkt.com and find the statistics that are most correlated with a player's market values. In other words, we are aiming to find the certain statistics that makes a player valuable.
+
+```{r,include}
+
+#Loading the data sets 
+
+standard <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "standard", team_or_player = "player")
+
+shooting <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "shooting", team_or_player = "player")
+
+passing <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "passing", team_or_player = "player")
+
+passingtypes <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "passing_types", team_or_player = "player")
+
+gca <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "gca", team_or_player = "player")
+```
+
+```{r, include=FALSE}
+defense <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "defense", team_or_player = "player")
+possession <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "possession", team_or_player = "player")
+misc <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "misc", team_or_player = "player")
+playingtime <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "playing_time", team_or_player = "player")
+keepers <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "keepers", team_or_player = "player")
+keepers_adv <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "keepers_adv", team_or_player = "player")
+```
+
+```{r, include=FALSE}
+market_values <- get_player_market_values(country_name = c("England", "Spain", "France", "Italy", "Germany"), start_year = c(2017,2018,2019))
+```
+
+```{r, include=FALSE}
+# Renaming the variables
+
+standard <- standard %>% 
+  rename(Matches_Played = MP_Playing,
+         Starts = Starts_Playing,
+         Min = Min_Playing,
+         Min_per_90 = Mins_Per_90_Playing,
+         xG = xG_Expected,
+         npxG = npxG_Expected,
+         xA = xA_Expected,
+         'npxG+xA' = 'npxG+xA_Expected')
+    
+shooting <- shooting %>% 
+  rename(Gls = Gls_Standard,
+         Sh = Sh_Standard,
+         SoT = SoT_Standard,
+         SoT_percent = SoT_percent_Standard,
+         SoT_per_90 = SoT_per_90_Standard,
+         Sh_per_90_Standard = Sh_per_90_Standard,
+         SoT_per_90 = SoT_per_90_Standard,
+         G_per_Sh = G_per_Sh_Standard,
+         G_per_SoT = G_per_SoT_Standard,
+         Dist = Dist_Standard,
+         FK = FK_Standard,
+         PK = PK_Standard,
+         PKatt = PKatt_Standard,
+         xG = xG_Expected,
+         npxG = npxG_Expected,
+         npxG_per_Sh = npxG_per_Sh_Expected,
+         G_minus_xG = G_minus_xG_Expected,
+         npG_minus_xG = 'np:G_minus_xG_Expected')
+
+defense <- defense %>% 
+  rename(
+Tkl = Tkl_Tackles,
+TklW = TklW_Tackles,
+Def_3rd = 'Def 3rd_Tackles',
+Mid_3rd = 'Mid 3rd_Tackles',
+Att_3rd = 'Att 3rd_Tackles',
+Tkl_vs_dribble = Tkl_Vs,
+Att_vs_dribble = Att_Vs,
+Successful_Pressure_Percent = Tkl_percent_Vs,
+Def_3rd_Pressures = 'Def 3rd_Pressures',
+Mid_3rd_Pressures = 'Mid 3rd_Pressures',
+Att_3rd_Pressures = 'Att 3rd_Pressures',
+Blocks = Blocks_Blocks)
+
+possession <- possession %>% 
+  rename(
+    Touches = Touches_Touches,
+    Def_3rd_Touches = 'Def 3rd_Touches',
+    Mid_3rd_Touches = 'Mid 3rd_Touches',
+    Att_3rd_Touches = 'Att 3rd_Touches',
+    Att_Pen_Touches = 'Att Pen_Touches',
+    Carries = Carries_Carries)
+
+keepers <- keepers %>% 
+  rename(Matches_Played = MP_Playing,
+         Starts = Starts_Playing,
+         Min = Min_Playing,
+         Min_per_90 = Mins_Per_90_Playing)
+
+keepers_adv <- keepers_adv %>% 
+  rename(GA = GA_Goals,
+         PKA = PKA_Goals,
+         FK = FK_Goals,
+         CK = CK_Goals,
+         OG = OG_Goals,
+         PSxG = PSxG_Expected,
+         PSxG_per_SoT = PSxG_per_SoT_Expected,
+         PSxG_plus_minus = `PSxG+_per__minus__Expected`,
+         per_90 = '_per_90_Expected')
+
+passing <- passing %>% 
+  rename(Cmp = Cmp_Total,
+         Cmp_percent = Cmp_percent_Total,
+         TotDist = TotDist_Total,
+         PrgDist = PrgDist_Total)
+
+playingtime <- playingtime %>% 
+  rename(Matches_Played = MP_Playing.Time,
+         Min = Min_Playing.Time,
+         Min_per_90 = Mins_Per_90_Playing.Time,
+         Starts = Starts_Starts,
+         Min_per_Match_Start = Mn_per_Start_Starts,
+         Compl = Compl_Starts,
+         Subs = Subs_Subs,
+         Mn_per_Sub = Mn_per_Sub_Subs,
+         unSub = unSub_Subs,
+         PPM = PPM_Team.Success,
+         onG = onG_Team.Success,
+         onGA = onGA_Team.Success,
+         plus_per_minus = plus_per__minus__Team.Success,
+         plus_per_minus_per_90 = plus_per__minus_90_Team.Success,
+         On_minus_Off = On_minus_Off_Team.Success,
+         onxG = onxG_Team.Success..xG.,
+         onxGA = onxGA_Team.Success..xG,
+         xGplus_per_minus = xGplus_per__minus__Team.Success..xG,
+         xGplus_per_minus_per_90 = xGplus_per__minus_90_Team.Success..xG,
+         xG_On_minus_Off = On_minus_Off_Team.Success..xG)
+```
+
+```{r, include = FALSE}
+# Storing the character data types as factors to save more storage and call objects more efficiently
+market_values <- as.data.frame(unclass(market_values),stringsAsFactors = TRUE)
+defense <- as.data.frame(unclass(defense),stringsAsFactors = TRUE)
+gca <- as.data.frame(unclass(gca),stringsAsFactors = TRUE)
+keepers <- as.data.frame(unclass(keepers),stringsAsFactors = TRUE)
+keepers_adv <- as.data.frame(unclass(keepers_adv),stringsAsFactors = TRUE)
+misc <- as.data.frame(unclass(misc),stringsAsFactors = TRUE)
+passing <- as.data.frame(unclass(passing),stringsAsFactors = TRUE)
+passingtypes <- as.data.frame(unclass(passingtypes),stringsAsFactors = TRUE)
+playingtime <- as.data.frame(unclass(playingtime),stringsAsFactors = TRUE)
+possession <- as.data.frame(unclass(possession), stringsAsFactors = TRUE)
+shooting <- as.data.frame(unclass(shooting), stringsAsFactors = TRUE)
+standard <- as.data.frame(unclass(standard), stringsAsFactors = TRUE)
+```
+
+We are going to filer the players by position. Here are the different positions listed on Transfermarkt and the number of players at the respective position.
+
+```{r}
+table(market_values$player_position)
+```
+
+Notice that there are some 'strange' values at some positions. Specifically:
+
+`attack` : 1 player
+
+`midfield`: 5 players
+
+`defence`: 2 players
+
+```{r}
+strange <- market_values %>% 
+  select(player_name, comp_name, player_position, current_club, player_market_value_euro, player_age) %>% 
+  filter(player_position == 'midfield' | player_position == 'attack' | player_position == 'defence')
+
+head(strange, 8)
+```
+
+Are these players we can remove? Non-relevant players? Most players we don't have a valuation for anyway.
+
+```{r, include = FALSE}
+
+# Here we are creating a unique identifier for each table so they can be joined
+
+market_values <- market_values %>% 
+  mutate(Season_End_Year = season_start_year + 1,
+         PlayerYearComp_id = paste(player_name, Season_End_Year, comp_name))
+
+standard <- standard %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+shooting <- shooting %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+passing <- passing %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+passingtypes <- passingtypes %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+gca <- gca %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+defense <- defense %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+possession <- possession %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+playingtime <- playingtime %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+misc <- misc %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+keepers <- keepers %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+keepers_adv <- keepers_adv %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+```
+
+**Joining Data Sets**
+
+We created a unique identifier for each table and now it's time to filter our positions and pull data from the relevant tables to that position. Here are the tables we will use for each position:
+
+1: `keepers`, `keepers_adv`, `playingtime`, `standard`, `market_values`
+
+2-6: `defense`, `possession`, `playingtime`, `passing`, `passingtypes`, `standard`, `market_values`
+
+7-11: `standard`, `shooting`, `gca`, `passing`, `passingtypes`, `possession`, `playingtime`, `market_values`
+
+```{r, include = FALSE}
+# Here we are merging the relevant tables to goal keepers
+# For every duplicate variable we are adding a suffix on the end ".REMOVEDUPLICATE"
+# We will write a code later that removes any variable with this suffix, thus removing all the variables 
+
+# 1 - Goal Keepers 
+Goalkeepers1 <- inner_join(x = standard,
+                             y = keepers,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Goalkeepers1 <- inner_join(x = Goalkeepers1,
+                             y = keepers_adv,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Goalkeepers1 <- inner_join(x = Goalkeepers1,
+                             y = playingtime,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Goalkeepers1 <- inner_join(x = Goalkeepers1,
+                             y = market_values,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+# Removing duplicate variables 
+Goalkeepers1 <- Goalkeepers1 %>% select(-contains("REMOVEDUPLICATE"))
+
+# 2 - 6 
+Defenders1 <- inner_join(x = standard,
+                             y = defense,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Defenders1 <- inner_join(x = Defenders1,
+                             y = possession,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Defenders1 <- inner_join(x = Defenders1,
+                             y = playingtime,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Defenders1 <- inner_join(x = Defenders1,
+                             y = passing,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Defenders1 <- inner_join(x = Defenders1,
+                             y = passingtypes,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Defenders1 <- inner_join(x = Defenders1,
+                             y = market_values,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+# Removing duplicate variables 
+Defenders1 <- Defenders1 %>% select(-contains("REMOVEDUPLICATE"))
+
+# 7 - 11 
+Attacking1 <- inner_join(x = standard,
+                             y = shooting,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Attacking1 <- inner_join(x = Attacking1,
+                             y = gca,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Attacking1 <- inner_join(x = Attacking1,
+                             y = passing,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Attacking1 <- inner_join(x = Attacking1,
+                             y = passingtypes,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Attacking1 <- inner_join(x = Attacking1,
+                             y = possession,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Attacking1 <- inner_join(x = Attacking1,
+                             y = playingtime,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Attacking1 <- inner_join(x = Attacking1,
+                             y = market_values,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+# Removing duplicate variables 
+Attacking1 <- Attacking1 %>% select(-contains("REMOVEDUPLICATE"))
+```
+
+
+# Attacking
+
+```{r}
+# Creating a table to remove all the factor variables with more than 40 factors
+# Filtering out positions 7 - 11
+
+# All Variables
+
+Attacking2 <- Attacking1 %>% 
+    select(-region, -PlayerYearComp_id, -Url, -Season_End_Year, -Squad, 
+           -Player, -Nation, -Pos, -Age, -Born, -player_dob, -player_name, 
+           -player_num, -squad, -country, -comp_name, -player_nationality, 
+           -current_club, -player_height_mtrs, -date_joined, -joined_from, 
+           -contract_expiry, -player_url) %>% 
+    filter(player_position == 'Right Winger' | player_position == 'Central Midfield'| 
+           player_position == 'Centre-Forward' | player_position == 'Left Winger' |
+             player_position == 'Attacking Midfield')
+
+RF_Attacking <- randomForest(player_market_value_euro ~ .,
+                       data = Attacking2,
+                       type = regression,
+                       mtry = 4,
+                       na.action = na.roughfix,
+                       ntree = 1500)
+print(RF_Attacking)
+plot(RF_Attacking)
+```
+
+```{r}
+# All Variables
+rf_mods <- list()
+oob_err <- NULL
+test_err <- NULL
+for(mtry in 1:9){
+  rf_fit_attacking <- randomForest(player_market_value_euro ~ 
+                           ., 
+                         data = Attacking2,
+                         mtry = mtry,
+                         na.action = na.roughfix,
+                         ntree = 600)
+  oob_err[mtry] <- rf_fit_attacking$mse[600]
+  
+  cat(mtry," ")
+}
+## 1  2  3  4  5  6  7  8  9
+results_DF <- data.frame(mtry = 1:9, oob_err)
+ggplot(results_DF, aes(x = mtry, y = oob_err)) + geom_point() + theme_minimal() + xlim(1,9)
+beep(8)
+```
+
+
+
+
+
+
+
+
+
+# Goalkeeper
+
+```{r}
+# On minus off was not as correlated as plus per minus per 90 
+# onxGA had a higher correlation than GA
+# plus per minus per 90 was .05
+# plus per minus was actually more highly correlated with market price than plus per minus per 90 
+# .05 plus_per_minus_per_90
+# .22 plus per minus 
+# .23 xGplus_per_minus
+
+# onGA .08
+# onxG .10
+
+# .43 onxGa + xG plus per minus 
+# .47 xGplus_per_minus + onxGA + W
+
+# PSxG .1
+
+
+
+Goalkeepers_linreg <- lm(player_market_value_euro ~ xGplus_per_minus + onxG + W,
+                         data = Goalkeepers2)
+
+summary(Goalkeepers_linreg)
+```
+
+```{r}
+library('randomForest')
+
+Goalkeepers2 <- Goalkeepers1 %>% 
+    select(-region, -PlayerYearComp_id, -Url, -Season_End_Year, -Squad, -Player, -Nation, -Pos, -Age, -Born, -player_dob, -player_name, -player_num, -squad, 
+         -country, -comp_name, -player_nationality, -current_club, -player_height_mtrs, -date_joined, -joined_from, -contract_expiry, -player_url) %>% 
+    filter(player_position == 'Goalkeeper') %>% 
+    select(-player_position)
+
+rf_fit <- randomForest( player_market_value_euro ~ .,
+                       data = Goalkeepers2,
+                       type = regression,
+                       mtry = 3,
+                       na.action = na.roughfix,
+                       ntree = 600)
+
+print(rf_fit)
+
+plot(rf_fit)
+```
+
+```{r}
+
+rf_mods <- list()
+oob_err <- NULL
+test_err <- NULL
+for(mtry in 1:9){
+  rf_fit_nicholas_kondo <- randomForest(player_market_value_euro ~ 
+                           ., 
+                         data = Goalkeepers2,
+                         mtry = mtry,
+                         na.action = na.roughfix,
+                         ntree = 600)
+  oob_err[mtry] <- rf_fit_nicholas_kondo$mse[600]
+  
+  cat(mtry," ")
+}
+## 1  2  3  4  5  6  7  8  9
+
+results_DF <- data.frame(mtry = 1:9, oob_err)
+ggplot(results_DF, aes(x = mtry, y = oob_err)) + geom_point() + theme_minimal() + xlim(1,9)
+```
+
+Variable Importance Plot
+
+```{r}
+varImpPlot(rf_fit_nicholas_kondo, n.var = 15)
+```
+
 # Defenders
 
 ### Random Forest
@@ -127,3 +669,700 @@ summary(Defenders_LinReg)
 We have an adjusted R square of .46 with coefficients
 
 
+
+## Appendix
+
+### Standard
+
+`Season_End_Year`: The year at the end of the season.
+
+`Squad`: The team the player plays on.
+
+`Comp`: The league the player plays in.
+
+`Player`: The name of the player.
+
+`Nation`: Nationality of the Player.
+
+`Pos`: The player's position
+
+`Age`: Current Age
+
+`Born`: Year of Birth
+
+`Matches_Played`: Matches Played
+
+`Starts`: Games Started
+
+`Min`: Minutes Played
+
+`Min_per_90`: Minutes Played divided by 90
+
+`Gls`: Goals
+
+`Ast`: Assists
+
+`G_minus_PK`: Goals minus Penalty Kicks
+
+`PK`: Penalty Kicks Made
+
+`PKatt`: Penalty Kicks Attempted
+
+`CrdY`: Yellow cards
+
+`CrdR`: Red Cards
+
+`Gls_Per`: Goals Scored per 90 minutes
+
+`Ast_Per`: Assists per 90 minutes
+
+`G+A_Per`: Goals and Assists per 90 minutes
+
+`G_minus_PK_Per`: Goals minus Penalty Kicks per 90 minutes
+
+`G+A_minus_PK_Per`: Goals and Assists minus Penalty Kicks per 90 minutes
+
+`xG`: Expected Goals
+
+`npxG`: Non-Penalty Expected Goals
+
+`xA`: xG Assisted
+
+`npxG+xA`: Non Penalty Expected Goals plus xG Assisted
+
+`xG_Per`: Expected Goals per 90 minutes
+
+`xA_Per`: xG Assisted per 90 minutes
+
+`xG+xA_Per`: Expected Goals plus Assist per 90 minutes
+
+`npxG_Per`: Non-Penalty Expected Goals per 90 minutes
+
+`npxG+xA_Per`: Non-Penalty Expected Goals plus xG Assisted per 90 minutes
+
+### Goalkeeping - Luke
+
+`Season_End_Year`: The year at the end of the season.
+
+`Squad`: The team the player plays on.
+
+`Comp`: The league the player plays in.
+
+`Player`: The name of the player.
+
+`Nation`: Nationality of the Player.
+
+`Pos`: The player's position
+
+`Age`: Current Age
+
+`Born`: Year of Birth
+
+`Matches_Played`: Matches Played
+
+`Starts`: Games Started
+
+`Min`: Minutes Played
+
+`Min_per_90`: Minutes Played divided by 90 (Number of games)
+
+`GA`: Goals scored against
+
+`GA90`: Goals scored against per 90 minutes
+
+`SoTA`: Shots on Target Against
+
+`Saves`: Number of saves
+
+`Save_percent`: (Shots on Target Against - Goals Against) / Shots on Target Against
+*Note that not all shots on target are stopped by the keeper, many will be stopped by defenders. Does not include penalty kicks*
+
+`W`: Wins
+
+`D`: Draws
+
+`L`: Losses
+
+`CS`: Clean sheets (When no goals are scored against)
+
+`CS_percent`: Percentage of matches resulting in clean sheets
+
+`PKatt_Penalty`: Penalty kicks attempted
+
+`PKA_Penalty`: Penalty kicks allowed in
+
+`PKsv_Penalty`:Penalty kicks saved
+
+`PKm_Penalty`: Penalty kicks missed by opposing team
+
+`Save_percent_Penalty`: Penalty Kick Goals Against/Penalty Kick Attempts  *Penalty shots that miss the target are not included*
+
+### Advanced Goalkeeping - Luke
+
+`Season_End_Year`: The year at the end of the season.
+
+`Squad`: The team the player plays on.
+
+`Comp`: The league the player plays in.
+
+`Player`: The name of the player.
+
+`Nation`: Nationality of the Player.
+
+`Pos`: The player's position
+
+`Age`: Current Age
+
+`Born`: Year of Birth
+
+`Min_per_90`: Minutes Played divided by 90 (Number of games)
+
+`GA`: Goals scored against
+
+`PKA`: Penalty Kicks Allowed
+
+`FK`: Free Kick Goals Against
+
+`CK`: Corner Kick Goals Against
+
+`OG`: Own Goals Scored Against Keeper
+
+`PSxG`: Post-shot expected goal; based on how likely the goalkeeper is to save the shot. (In-game penalty kicks included)
+
+`PSxG_per_SoT`: Post-shot expected goals per shot on target. (Penalty kicks not included)
+
+`PSxG_plus_minus`: Post-Shot Expected Goals minus Goals Allowed (Positive numbers suggest better luck or an above average ability to stop shots)
+
+`per_90`: Post-Shot Expected Goals minus Goals Allowed per 90 minutes
+
+`Cmp_Launched`: Passes longer than 40 yards completed
+
+`Att_Launched`: Passes longer than 40 yards attempted
+
+`Cmp_percent_Launched`: 40+ yard pass completion rate
+
+`Att_Passes`: Attempted passes excluding goal kicks
+
+`Thr_Passes`: Throws attempted
+
+`Launch_percent_Passes`: Percentage of Passes that were Launched and not Goal Kicks
+
+`AvgLen_Passes`: Average Length of Passes in Yards
+
+`Att_Goal`: Goal Kicks Attempted
+
+`Launch_percent_Goal`: Percentage of Goal Kicks sent more than 40 yards
+
+`AvgLen_Goal`: Average length of goal kicks
+
+`Opp_Crosses`: Opponents attempted crosses into penalty area
+
+`Stp_percent_Crosses`: Percent of crosses into penalty area which were successfully stopped by the goalkeeper
+
+`#OPA_Sweeper`: Number of defensive actions outside of penalty area
+
+`#OPA_per_90_Sweeper`: Defensive actions outside of penalty area per 90 minutes
+
+`AvgDist_Sweeper`: Average distance from goal (in yards) of all defensive actions
+
+### Shooting 
+
+`Season_End_Year`: The year at the end of the season.
+
+`Squad`: The team the player plays on.
+
+`Player`: The name of the player.
+
+`Nation`: Nationality of the Player.
+
+`Pos`: The player's position
+
+`Age`: Current Age
+
+`Born`: Year of Birth
+
+`Mins_per_90`: Minutes played divided by 90
+
+`Gls`: Goals scored or allowed
+
+`SH`: Shots Total
+
+`SoT`: Shots on target
+
+`SoT_percent`: Shots on target percentage, percentage of shots that are on target
+
+`Sh_per_90`: Shots total per 90 minutes
+
+`Sot_per_90`: Shots on target per 90 minutes
+
+`G_per_Sh`: Goals per shot
+
+`G_per_SoT`: Goals per shot on target
+
+`Dist`: Average distance, in yards, from goal of all shots taken
+
+`FK`: Shots from free kicks
+
+`PK`: Penalty Kicks Made
+
+`PKatt`: Penalty Kicks Attempted
+
+`xG`: Expected Goals
+
+`npxG`: Non-Penalty Expected Goals
+
+`npxG_per_Sh`: Non-Penalty Expected Goals per shot
+
+`G_minus_xG`: Goals minus Expected Goals
+
+`npG_minus_npxG`: Non-Penalty Goals minus Non-Penalty Expected Goals
+
+### Passing - Luke
+
+`Season_End_Year`: The year at the end of the season
+
+`Squad`: The team the player plays on
+
+`Comp`: The league the player plays in
+
+`Player`: The name of the player
+
+`Nation`: Nationality of the Player
+
+`Pos`: The player's position
+
+`Age`: Current Age
+
+`Born`: Year of Birth
+
+`Mins_per_90`: Minutes played divided by 90
+
+`Cmp`: Passes Completed
+
+`Cmp_percent`: Pass completion percentage
+
+`TotDist`: Total distance of completed passes in yards
+
+`PrgDist`: Total distance, in yards, that completed passes have traveled towards the opponent's goal
+
+`Cmp_short`: Completed passes within 5 and 15 yards
+
+`Att_short`: Attempted passes within 5 to 15 yards
+
+`Cmp_percent_Short`: Completion percentage of passes within 5 to 15 yards
+
+`Cmp_Medium`: Completed passes within 15 to 30 yards
+
+`Att_Medium`:Attempted passes within 15 to 30 yards
+
+`Cmp_percent_Medium`: Completion percentage of passes within 15 to 30 yards
+
+`Cmp_Long`: Completed passes over 30 yards
+
+`Att_Long`: Attempted passes over 30 yards
+
+`Cmp_percent_Long`: Completion percentage of passes over 30 yards
+
+`Ast`: Assists
+
+`xA`: Expected Assists
+
+`A_minus_xA`: Assists minus xA
+
+`KP`: Passes directly leading to a shot
+
+`Final_Third`: Completed passes that enter the 1/3 of the pitch closest to the goal
+
+`PPA`: Completed passes into the 18-yard box
+
+`CrsPA`: Completed crosses into the 18-yard box
+
+`Prog`: Completed passes moving the ball towards the opponent's goal at least 10 yards from its furthest point in the last six passes, or any completed pass into the penalty area
+
+### Pass Types - Luke
+
+`Season_End_Year`: The year at the end of the season.
+
+`Squad`: The team the player plays on.
+
+`Comp`: The league the player plays in.
+
+`Player`: The name of the player.
+
+`Nation`: Nationality of the Player.
+
+`Pos`: The player's position
+
+`Age`: Current Age
+
+`Born`: Year of Birth
+
+`Mins_Per_90`: Minutes played divided by 90
+
+`Att`:
+
+`Live_Pass`:
+
+`Dead_Pass`:
+
+`FK_Pass`:
+
+`TB_Pass`:
+
+`Press_Pass`:
+
+`Sw_Pass`:
+
+`Crs_Pass`:
+
+`CK_Pass`:
+
+`In_Corner`:
+
+`Out_Corner`:
+
+`Str_Corner`:
+
+`Ground_Height`:
+
+`Low_Height`:
+
+`High_Height`:
+
+`Left_Body`:
+
+`Right_Body`:
+
+`Head_Body`:
+
+`TI_Body`:
+
+`Other_Body`:
+
+`Cmp_Outcomes`:
+
+`Off_Outcomes`:
+
+`Out_Outcomes`:
+
+`In_Outcomes`:
+
+`Blocks_Outcomes`:
+
+### Goal and Shot Creation - Luke
+
+`Season_End_Year`: The year at the end of the season.
+
+`Squad`: The team the player plays on.
+
+`Comp`: The league the player plays in.
+
+`Player`: The name of the player.
+
+`Nation`: Nationality of the Player.
+
+`Pos`: The player's position
+
+`Age`: Current Age
+
+`Born`: Year of Birth
+
+`Mins_Per_90`: Minutes played divided by 90
+
+`SCA_SCA`:
+
+`SCA90__SCA`:
+
+`PassLive_SCA`:
+
+`PassDead_SCA`:
+
+`Drib_SCA`:
+
+`Sh_SCA`:
+
+`Fld_SCA`:
+
+`Def_SCA`:
+
+`GCA_GCA`:
+
+`GCA90_GCA`:
+
+`PassLive_GCA`:
+
+`PassDead_GCA`:
+
+`Drib_GCA`:
+
+`Sh_GCA`:
+
+`Fld_GCA`:
+
+`Def_GCA`:
+
+### Defensive Actions
+
+`Season_End_Year`: The year at the end of the season.
+
+`Squad`: Team
+
+`Comp`: Completions
+
+`Player`: Players name
+
+`Nation`: Players Nationality
+
+`Pos`: Players position
+
+`Age`: Current age
+
+`Born`: Year of Birth
+
+`Mins_Per_90`: Minutes played divided by 90
+ 
+`Tkl`: Number of players tackled
+
+`TklW`: Tackles in which the tackler's team won possession of the ball
+
+`Def_3rd`: Tackles in defensive 1/3
+
+`Mid_3rd`: Tackles in middle 1/3
+
+`Att_3rd`: Tackles in attacking 1/3
+
+`Tkl_vs_dribble`: Number of dribblers tackled
+
+`Att_vs_dribble`: Number of times dribbled past plus number of tackles
+
+`Press_Pressures`: Number of times applying pressure to opposing player who is receiving, carrying or releasing the ball
+
+`Succ_Pressures`: Number of times the squad gained possession withing five seconds of applying pressure
+
+`Successful_Pressure_Percent`: Percentage of time the squad gained possession withing five seconds of applying pressure
+
+`Def_3rd_Pressures`: Number of times applying pressure to opposing player who is receiving, carrying or releasing the ball, in the defensive 1/3
+
+`Mid_3rd_Pressures`:Number of times applying pressure to opposing player who is receiving, carrying or releasing the ball, in the middle 1/3
+
+`Att_3rd_Pressures`: Number of times applying pressure to opposing player who is receiving, carrying or releasing the ball, in the attacking 1/3
+
+`Blocks`: Number of times blocking the ball by standing in its path
+
+`Sh_Blocks`: Number of times blocking a shot by standing in its path
+
+`ShSv_Blocks`: Number of times blocking a shot that was on target, by standing in its path
+
+`Pass_Blocks`: Number of times blocking a pass by standing in its path
+
+`Int`: Interceptions
+
+`Tkl+Int`: Number of players tackled plus number of interceptions
+
+`Clr`: Clearances
+
+`Err`: Mistakes leading to an opponent's shot
+
+### Possessions
+
+`Season_End_Year`: The year at the end of the season.
+
+`Squad`: Team
+
+`Comp`: Completions
+
+`Player`: Players name
+
+`Nation`: Players Nationality
+
+`Pos`: Players position
+
+`Age`: Current age
+
+`Born`: Year of Birth
+
+`Touches`: Number of times a player touched the ball
+
+`Def_Pen`: Touches in defensive penalty area
+
+`Def_3rd_Touches`: Touches in defensive 1/3
+
+`Mid_3rd_Touches`: Touches in middle 1/3
+
+`Att_3rd_Touches`: Touches in attacking 1/3
+
+`Att_Pen_Touches`: Touches in attacking penalty area
+
+`Live_Touches`: Live-ball touches
+
+`Succ_Dribbles`: Dribbles Completed Successfully
+
+`Att_Dribbles : Dribbles Attempted
+
+`Succ_percent_Dribbles`: Percentage of Dribbles Completed Successfully
+
+`#Pl_Dribbles`: Number of Players Dribbled Past
+
+`Megs_Dribbles`: Number of times a player dribbled the ball through an opposing player's legs
+
+`Carries`: Number of times the player controlled the ball with their feet
+
+`TotDist_Carries`: Total distance, in yards, a player moved the ball while controlling it with their feet, in any direction
+
+`PrgDist_Carries`: Progressive Distance; Total distance, in yards, a player moved the ball while controlling it with their feet towards the opponent's goal
+
+`Prog_Carries`: Carries that move the ball towards the opponent's goal at least 5 yards, or any carry into the penalty area
+
+`Final_Third_Carries`: Carries that enter the 1/3 of the pitch closest to the goa
+
+`CPA_Carries`: Carries into the 18-yard box
+
+`Mis_Carries`: Number of times a player failed when attempting to gain control of a ball
+
+`Dis_Carries`: Number of times a player loses control of the ball after being tackled by an opposing player
+
+`Targ_Receiving`: Number of times a player was the target of an attempted pass
+
+`Rec_Receiving`: Number of times a player successfully received a pass
+
+`Rec_percent_Receiving`: Passes Received Percentage
+
+`Prog_Receiving`: Progressive Passes Received
+
+### Playing Time
+
+`Season_End_Year`: The year at the end of the season.
+
+`Squad`: The team the player plays on.
+
+`Comp`: The league the player plays in.
+
+`Player`: The name of the player.
+
+`Nation`: Nationality of the Player.
+
+`Pos`: The player's position
+
+`Age`: Current Age
+
+`Born`: Year of Birth
+
+`MP`: Matches Played
+
+`Min`: Minutes
+
+`Min_per_MP`: Minutes per Match Playerd
+
+`Min_percent_Playing.Time`: Percentage of team's total minutes in which player was on the pitch
+
+`Mins_per_90`: Minutes played divided by 90
+
+`Starts`: Game or games started by player
+
+`Mn_per_Start`: Minutes Per Match Started
+
+`Compl`: Complete matches played
+
+`Subs`: Games as sub
+
+`Mn_per_Sub`: Minutes Per Substitution
+
+`unSub`: Games as an unused substitute
+
+`PPM`:  Points per Match
+
+`onG`: Goals scored by team while on pitch
+
+`onGA`: Goals allowed by team while on pitch
+
+`plus_per_minus`: Goals scored minus goals allowed by the team while the player was on the pitch
+
+`plus_per_minus_per_90`: Goals scored minus goals allowed by the team while the player was on the pitch per 90 minutes played
+
+`On_minus_Off`: 
+
+`onxG`: Expected goals by team while on pitch
+
+`onxGA`: Expected goals allowed by team while on pitch
+
+`xGplus_per_minus`: Expected goals scored minus expected goals allowed by the team while the player was on the pitch
+
+`xGplus_per_minus_per_90`: Expected goals scored minus expected goals allowed by the team while the player was on the pitch per 90 minutes played
+
+### Misc
+
+`Season_End_Year`: The year at the end of the season.
+
+`Squad`: The team the player plays on.
+
+`Comp`: The league the player plays in.
+
+`Player`: The name of the player.
+
+`Nation`: Nationality of the Player.
+
+`Pos`: The player's position
+
+`Age`: Current Age
+
+`Mins_Per_90`: Minutes played divided by 90
+
+`CrdY`: Yellow cards
+
+`2CrdY`: Second Yellow Card
+
+`Fls`: Fouls committed
+
+`Fld`: Fouls drawn
+
+`Off`: Off-sides
+
+`Crs`: Crosses
+
+`Int`: Interceptions 
+
+`TklW`: Tackles in which the tackler's team won possession of the ball
+
+`PKwon`: Penalty Kicks Won
+
+`PKcon`: Penalty Kicks Conceded
+
+`OG`: Own Goals
+
+`Recov`: Number of loose balls recovered
+
+`Won_Aerial`: Aerials won
+
+`Lost_Aerial`: Aerials lost
+
+`Won_percent_Aerial`: Minimum .97 aerial duels per squad game to qualify as a leader
+
+### Market Values Table
+
+`squad`: The team the player plays on.
+
+`player_name`: The player's name
+
+`player_url`: The player's URL on transfermarkt
+
+`player_position`: The player's position
+
+`player_age`: The player's age
+
+`player_name`: The player's name
+
+`player_nationality`: The player's nationality
+
+`current_club`: The club the player currently plays on
+
+`player_height_mtrs`: The player's height
+
+`player_foot`: The player's dominant foot
+
+`joined_from`: The former club the player joined from 
+
+`contract_expiry`: The time when the player's contract expires
+
+`player_market_value_euro`: The valuation of the player in Euros
+
+`date_joined`: The date the player joined
