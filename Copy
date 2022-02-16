@@ -1,0 +1,699 @@
+---
+title: "Variable Names"
+author: "Nicholas Kondo, "
+subtitle: 
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+---
+
+{r setup, include=FALSE}
+
+# Please leave this code chunk as is. It makes some slight formatting changes to alter the output to be more aesthetically pleasing. 
+
+library(knitr)
+
+# Change the number in set seed to your own favorite number
+set.seed(4)
+options(width=70)
+options(scipen=99)
+
+
+# this sets text outputted in code chunks to small
+opts_chunk$set(tidy.opts=list(width.wrap=50),tidy=TRUE, size = "vsmall")  
+opts_chunk$set(message = FALSE,                                          
+               warning = FALSE,
+               # "caching" stores objects in code chunks and only rewrites if you change things
+               cache = TRUE,                               
+               # automatically downloads dependency files
+               autodep = TRUE,
+               # 
+               cache.comments = FALSE,
+               # 
+               collapse = TRUE,
+               # change fig.width and fig.height to change the code height and width by default
+               fig.width = 5.5,  
+               fig.height = 4.5,
+               fig.align='center')
+
+
+
+
+
+{r setup-2, include=FALSE}
+
+# Always print this out before your assignment
+sessionInfo()
+getwd()
+
+
+{r setup-3, include=FALSE}
+# loading all libraries
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+library(worldfootballR)
+library(dplyr)
+library(tidyverse)
+library(worldfootballR)
+library(utils)
+library(rsample)
+library(glmnet)
+library(glmnetUtils)
+library(forcats)
+library(rsample)
+library(ggplot2)
+library(sjPlot)
+
+library(partykit)
+library(tidyverse)
+library(titanic)
+library(PerformanceAnalytics)
+library(rpart)       
+library(rpart.plot)  
+library(randomForest)
+
+
+# note, do not run install.packages() inside a code chunk. install them in the console outside of a code chunk. 
+
+
+Introduction
+
+For this study, data was collected from FBref.com on the "Big 5" Leagues. Our data includes statistics in categories such as standard, shooting, passing, goal and shot creation, defense, miscellaneous, playing time, and market values. We compare a player's statistics with their market values listed on TransferMarkt.com and find the statistics that are most correlated with a player's market values. In other words, we are aiming to find the certain statistics that makes a player valuable.
+
+
+
+
+
+
+{r,include}
+
+#Loading the data sets 
+
+standard <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "standard", team_or_player = "player")
+
+shooting <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "shooting", team_or_player = "player")
+
+passing <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "passing", team_or_player = "player")
+
+passingtypes <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "passing_types", team_or_player = "player")
+
+gca <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "gca", team_or_player = "player")
+
+
+
+{r,include}
+
+#Loading the data sets 
+
+standard <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "standard", team_or_player = "player")
+
+shooting <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "shooting", team_or_player = "player")
+
+passing <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "passing", team_or_player = "player")
+
+passingtypes <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "passing_types", team_or_player = "player")
+
+gca <- fb_big5_advanced_season_stats(season_end_year = c(2018:2020), stat_type = "gca", team_or_player = "player")
+
+
+
+{r, include=FALSE}
+market_values <- get_player_market_values(country_name = c("England", "Spain", "France", "Italy", "Germany"), start_year = c(2017,2018,2019))
+
+
+r, include=FALSE}
+
+# Renaming the variables
+
+standard <- standard %>% 
+  rename(Matches_Played = MP_Playing,
+         Starts = Starts_Playing,
+         Min = Min_Playing,
+         Min_per_90 = Mins_Per_90_Playing,
+         xG = xG_Expected,
+         npxG = npxG_Expected,
+         xA = xA_Expected,
+         'npxG+xA' = 'npxG+xA_Expected')
+    
+shooting <- shooting %>% 
+  rename(Gls = Gls_Standard,
+         Sh = Sh_Standard,
+         SoT = SoT_Standard,
+         SoT_percent = SoT_percent_Standard,
+         SoT_per_90 = SoT_per_90_Standard,
+         Sh_per_90_Standard = Sh_per_90_Standard,
+         SoT_per_90 = SoT_per_90_Standard,
+         G_per_Sh = G_per_Sh_Standard,
+         G_per_SoT = G_per_SoT_Standard,
+         Dist = Dist_Standard,
+         FK = FK_Standard,
+         PK = PK_Standard,
+         PKatt = PKatt_Standard,
+         xG = xG_Expected,
+         npxG = npxG_Expected,
+         npxG_per_Sh = npxG_per_Sh_Expected,
+         G_minus_xG = G_minus_xG_Expected,
+         npG_minus_xG = 'np:G_minus_xG_Expected')
+
+defense <- defense %>% 
+  rename(
+Tkl = Tkl_Tackles,
+TklW = TklW_Tackles,
+Def_3rd = 'Def 3rd_Tackles',
+Mid_3rd = 'Mid 3rd_Tackles',
+Att_3rd = 'Att 3rd_Tackles',
+Tkl_vs_dribble = Tkl_Vs,
+Att_vs_dribble = Att_Vs,
+Successful_Pressure_Percent = Tkl_percent_Vs,
+Def_3rd_Pressures = 'Def 3rd_Pressures',
+Mid_3rd_Pressures = 'Mid 3rd_Pressures',
+Att_3rd_Pressures = 'Att 3rd_Pressures',
+Blocks = Blocks_Blocks)
+
+possession <- possession %>% 
+  rename(
+    Touches = Touches_Touches,
+    Def_3rd_Touches = 'Def 3rd_Touches',
+    Mid_3rd_Touches = 'Mid 3rd_Touches',
+    Att_3rd_Touches = 'Att 3rd_Touches',
+    Att_Pen_Touches = 'Att Pen_Touches',
+    Carries = Carries_Carries)
+
+keepers <- keepers %>% 
+  rename(Matches_Played = MP_Playing,
+         Starts = Starts_Playing,
+         Min = Min_Playing,
+         Min_per_90 = Mins_Per_90_Playing)
+
+keepers_adv <- keepers_adv %>% 
+  rename(GA = GA_Goals,
+         PKA = PKA_Goals,
+         FK = FK_Goals,
+         CK = CK_Goals,
+         OG = OG_Goals,
+         PSxG = PSxG_Expected,
+         PSxG_per_SoT = PSxG_per_SoT_Expected,
+         PSxG_plus_minus = `PSxG+_per__minus__Expected`,
+         per_90 = '_per_90_Expected')
+
+passing <- passing %>% 
+  rename(Cmp = Cmp_Total,
+         Cmp_percent = Cmp_percent_Total,
+         TotDist = TotDist_Total,
+         PrgDist = PrgDist_Total)
+
+playingtime <- playingtime %>% 
+  rename(Matches_Played = MP_Playing.Time,
+         Min = Min_Playing.Time,
+         Min_per_90 = Mins_Per_90_Playing.Time,
+         Starts = Starts_Starts,
+         Min_per_Match_Start = Mn_per_Start_Starts,
+         Compl = Compl_Starts,
+         Subs = Subs_Subs,
+         Mn_per_Sub = Mn_per_Sub_Subs,
+         unSub = unSub_Subs,
+         PPM = PPM_Team.Success,
+         onG = onG_Team.Success,
+         onGA = onGA_Team.Success,
+         plus_per_minus = plus_per__minus__Team.Success,
+         plus_per_minus_per_90 = plus_per__minus_90_Team.Success,
+         On_minus_Off = On_minus_Off_Team.Success,
+         onxG = onxG_Team.Success..xG.,
+         onxGA = onxGA_Team.Success..xG,
+         xGplus_per_minus = xGplus_per__minus__Team.Success..xG,
+         xGplus_per_minus_per_90 = xGplus_per__minus_90_Team.Success..xG,
+         xG_On_minus_Off = On_minus_Off_Team.Success..xG)
+         
+         
+         
+         {r, include = FALSE}
+# Storing the character data types as factors to save more storage and call objects more efficiently
+market_values <- as.data.frame(unclass(market_values),stringsAsFactors = TRUE)
+defense <- as.data.frame(unclass(defense),stringsAsFactors = TRUE)
+gca <- as.data.frame(unclass(gca),stringsAsFactors = TRUE)
+keepers <- as.data.frame(unclass(keepers),stringsAsFactors = TRUE)
+keepers_adv <- as.data.frame(unclass(keepers_adv),stringsAsFactors = TRUE)
+misc <- as.data.frame(unclass(misc),stringsAsFactors = TRUE)
+passing <- as.data.frame(unclass(passing),stringsAsFactors = TRUE)
+passingtypes <- as.data.frame(unclass(passingtypes),stringsAsFactors = TRUE)
+playingtime <- as.data.frame(unclass(playingtime),stringsAsFactors = TRUE)
+possession <- as.data.frame(unclass(possession), stringsAsFactors = TRUE)
+shooting <- as.data.frame(unclass(shooting), stringsAsFactors = TRUE)
+standard <- as.data.frame(unclass(standard), stringsAsFactors = TRUE)
+
+
+We are going to filer the players by position. Here are the different positions listed on Transfermarkt and the number of players at the respective position.
+
+{r}
+table(market_values$player_position)
+
+Notice that there are some 'strange' values at some positions. Specifically:
+
+attack : 1 player
+
+midfield: 5 players
+
+defence: 2 players
+
+
+
+
+{r}
+strange <- market_values %>% 
+  select(player_name, comp_name, player_position, current_club, player_market_value_euro, player_age) %>% 
+  filter(player_position == 'midfield' | player_position == 'attack' | player_position == 'defence')
+
+head(strange, 8)
+
+
+Are these players we can remove? Non-relevant players? Most players we don't have a valuation for anyway.
+
+
+
+{r, include = FALSE}
+
+# Here we are creating a unique identifier for each table so they can be joined
+
+market_values <- market_values %>% 
+  mutate(Season_End_Year = season_start_year + 1,
+         PlayerYearComp_id = paste(player_name, Season_End_Year, comp_name))
+
+standard <- standard %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+shooting <- shooting %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+passing <- passing %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+passingtypes <- passingtypes %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+gca <- gca %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+defense <- defense %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+possession <- possession %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+playingtime <- playingtime %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+misc <- misc %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+keepers <- keepers %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+
+keepers_adv <- keepers_adv %>% 
+  mutate(PlayerYearComp_id = paste(Player, Season_End_Year, Comp))
+  
+  
+  
+  Joining Data Sets 
+
+We created a unique identifier for each table and now it's time to filter our positions and pull data from the relevant tables to that position.  Here are the tables we will use for each position:
+
+1: keepers, keepers_adv, playingtime, standard, market_values 
+
+2-6: defense, possession, playingtime, passing, passingtypes, standard, market_values 
+
+7-11: standard, shooting, gca, passing, passingtypes, possession, playingtime, market_values
+
+
+
+
+{r, include = FALSE}
+# Here we are merging the relevant tables to goal keepers
+# For every duplicate variable we are adding a suffix on the end ".REMOVEDUPLICATE"
+# We will write a code later that removes any variable with this suffix, thus removing all the variables 
+
+# 1 - Goal Keepers 
+Goalkeepers1 <- inner_join(x = standard,
+                             y = keepers,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Goalkeepers1 <- inner_join(x = Goalkeepers1,
+                             y = keepers_adv,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Goalkeepers1 <- inner_join(x = Goalkeepers1,
+                             y = playingtime,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Goalkeepers1 <- inner_join(x = Goalkeepers1,
+                             y = market_values,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+# Removing duplicate variables 
+Goalkeepers1 <- Goalkeepers1 %>% select(-contains("REMOVEDUPLICATE"))
+
+# 2 - 6 
+Defenders1 <- inner_join(x = standard,
+                             y = defense,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Defenders1 <- inner_join(x = Defenders1,
+                             y = possession,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Defenders1 <- inner_join(x = Defenders1,
+                             y = playingtime,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Defenders1 <- inner_join(x = Defenders1,
+                             y = passing,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Defenders1 <- inner_join(x = Defenders1,
+                             y = passingtypes,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Defenders1 <- inner_join(x = Defenders1,
+                             y = market_values,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+# Removing duplicate variables 
+Defenders1 <- Defenders1 %>% select(-contains("REMOVEDUPLICATE"))
+
+# 7 - 11 
+Attacking1 <- inner_join(x = standard,
+                             y = shooting,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Attacking1 <- inner_join(x = Attacking1,
+                             y = gca,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Attacking1 <- inner_join(x = Attacking1,
+                             y = passing,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Attacking1 <- inner_join(x = Attacking1,
+                             y = passingtypes,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Attacking1 <- inner_join(x = Attacking1,
+                             y = possession,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Attacking1 <- inner_join(x = Attacking1,
+                             y = playingtime,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+Attacking1 <- inner_join(x = Attacking1,
+                             y = market_values,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+# Removing duplicate variables 
+Attacking1 <- Attacking1 %>% select(-contains("REMOVEDUPLICATE"))
+
+
+Goalkeeper
+
+
+{r}
+# On minus off was not as correlated as plus per minus per 90 
+# onxGA had a higher correlation than GA
+# plus per minus per 90 was .05
+# plus per minus was actually more highly correlated with market price than plus per minus per 90 
+# .05 plus_per_minus_per_90
+# .22 plus per minus 
+# .23 xGplus_per_minus
+
+# onGA .08
+# onxG .10
+
+# .43 onxGa + xG plus per minus 
+# .47 xGplus_per_minus + onxGA + W
+
+# PSxG .1
+
+
+
+Goalkeepers_linreg <- lm(player_market_value_euro ~ xGplus_per_minus + onxG + W,
+                         data = Goalkeepers2)
+
+summary(Goalkeepers_linreg)
+                         
+                         + On_miuns_Off +
+                           onGA +onxGA, 
+           data = Goalkeepers2)
+
+
+# or just view the whole "list" object of 
+# the model results
+str(Goalkeepers_linreg)
+
+{r}
+library('randomForest')
+
+Goalkeepers2 <- Goalkeepers1 %>% 
+    select(-region, -PlayerYearComp_id, -Url, -Season_End_Year, -Squad, -Player, -Nation, -Pos, -Age, -Born, -player_dob, -player_name, -player_num, -squad, 
+         -country, -comp_name, -player_nationality, -current_club, -player_height_mtrs, -date_joined, -joined_from, -contract_expiry, -player_url) %>% 
+    filter(player_position == 'Goalkeeper') %>% 
+    select(-player_position)
+
+rf_fit <- randomForest( player_market_value_euro ~ .,
+                       data = Goalkeepers2,
+                       type = regression,
+                       mtry = 3,
+                       na.action = na.roughfix,
+                       ntree = 600)
+
+print(rf_fit)
+
+plot(rf_fit)
+
+
+
+
+
+{r}
+
+rf_mods <- list()
+oob_err <- NULL
+test_err <- NULL
+for(mtry in 1:9){
+  rf_fit_nicholas_kondo <- randomForest(player_market_value_euro ~ 
+                           ., 
+                         data = Goalkeepers2,
+                         mtry = mtry,
+                         na.action = na.roughfix,
+                         ntree = 600)
+  oob_err[mtry] <- rf_fit_nicholas_kondo$mse[600]
+  
+  cat(mtry," ")
+}
+## 1  2  3  4  5  6  7  8  9
+
+results_DF <- data.frame(mtry = 1:9, oob_err)
+ggplot(results_DF, aes(x = mtry, y = oob_err)) + geom_point() + theme_minimal() + xlim(1,9)
+
+
+Variable Importance Plot
+{r}
+varImpPlot(rf_fit_nicholas_kondo, n.var = 15)
+
+
+Defenders
+
+Random Forest
+
+
+{r}
+
+# Creating a table to remove all the factor variables with more than 40 factors
+# Filtering out positions 2 - 6 
+
+# All Variables
+
+Defenders2 <- Defenders1 %>% 
+    select(-region, -PlayerYearComp_id, -Url, -Season_End_Year, -Squad, 
+           -Player, -Nation, -Pos, -Age, -Born, -player_dob, -player_name, 
+           -player_num, -squad, -country, -comp_name, -player_nationality, 
+           -current_club, -player_height_mtrs, -date_joined, -joined_from, 
+           -contract_expiry, -player_url) %>% 
+    filter(player_position == 'Right-Back' | player_position == 'Left-Back'| 
+           player_position == 'Centre-Back' | player_position == 'Defensive Midfield')
+
+RF_AllVariables <- randomForest(player_market_value_euro ~ .,
+                       data = Defenders2,
+                       type = regression,
+                       mtry = 4,
+                       na.action = na.roughfix,
+                       ntree = 1500)
+print(RF_AllVariables)
+plot(RF_AllVariables)
+
+# Let's look at the Defense table only 
+defenseOnly <- inner_join(x = defense,
+                             y = market_values,
+                             by = "PlayerYearComp_id",
+                             suffix = c("",".REMOVEDUPLICATE"))
+
+defenseOnly <- defenseOnly %>% select(-contains("REMOVEDUPLICATE"))
+
+
+defenseOnly1 <- defenseOnly %>% 
+  select(-Season_End_Year, -Squad, -Player, -Nation, -Pos, -Age, -Born, -Url, 
+         -PlayerYearComp_id, -region, -player_dob, -player_name, 
+           -player_num, -squad, -country, -comp_name, -player_nationality, 
+           -current_club, -player_height_mtrs, -date_joined, -joined_from, 
+           -contract_expiry, -player_url) %>% 
+    filter(player_position == 'Right-Back' | player_position == 'Left-Back'| 
+           player_position == 'Centre-Back' | player_position == 'Defensive Midfield')
+
+RF_DefenseVariables <- randomForest(player_market_value_euro ~ .,
+                       data = defenseOnly1,
+                       type = regression,
+                       mtry = 3,
+                       na.action = na.roughfix,
+                       ntree = 1500)
+
+print(RF_DefenseVariables)
+plot(RF_DefenseVariables)
+
+
+{r}
+# All Variables
+rf_mods <- list()
+oob_err <- NULL
+test_err <- NULL
+for(mtry in 1:9){
+  rf_fit_all <- randomForest(player_market_value_euro ~., 
+                         data = Defenders2,
+                         mtry = mtry,
+                         na.action = na.roughfix,
+                         ntree = 600)
+  oob_err[mtry] <- rf_fit_all$mse[600]
+  
+  cat(mtry," ")
+}
+## 1  2  3  4  5  6  7  8  9
+results_DF <- data.frame(mtry = 1:9, oob_err)
+ggplot(results_DF, aes(x = mtry, y = oob_err)) + geom_point() + theme_minimal() + xlim(1,9)
+
+# Defense
+rf_mods <- list()
+oob_err <- NULL
+test_err <- NULL
+for(mtry in 1:9){
+  rf_fit_defense <- randomForest(player_market_value_euro ~ 
+                           ., 
+                         data = defenseOnly1,
+                         mtry = mtry,
+                         na.action = na.roughfix,
+                         ntree = 600)
+  oob_err[mtry] <- rf_fit_defense$mse[600]
+  
+  cat(mtry," ")
+}
+## 1  2  3  4  5  6  7  8  9
+results_DF <- data.frame(mtry = 1:9, oob_err)
+ggplot(results_DF, aes(x = mtry, y = oob_err)) + geom_point() + theme_minimal() + xlim(1,9)
+
+
+{r}
+varImpPlot(rf_fit_all, n.var = 15)
+
+varImpPlot(rf_fit_defense, n.var = 15)
+
+
+Important Variables
+
+W: Wins
+
+onG: Goals scored by team while on pitch
+
+xG +/- : Expected Goals Scored minus Expected Goals Allowed
+
+CS: Clean Ssheets
+
++/-: Goals Scored minus Goals Allowed
+
+Linear Regression
+
+{r}
+Defenders_LinReg <- lm(player_market_value_euro ~ onG + CS + xGplus_per_minus,
+                         data = Goalkeepers2)
+
+summary(Defenders_LinReg)
+
+We have an adjusted R square of .46 with coefficients 
+
+Attacking
+
+{r}
+# Creating a table to remove all the factor variables with more than 40 factors
+# Filtering out positions 7 - 11
+
+# All Variables
+
+Attacking2 <- Attacking1 %>% 
+    select(-region, -PlayerYearComp_id, -Url, -Season_End_Year, -Squad, 
+           -Player, -Nation, -Pos, -Age, -Born, -player_dob, -player_name, 
+           -player_num, -squad, -country, -comp_name, -player_nationality, 
+           -current_club, -player_height_mtrs, -date_joined, -joined_from, 
+           -contract_expiry, -player_url) %>% 
+    filter(player_position == 'Right Winger' | player_position == 'Central Midfield'| 
+           player_position == 'Centre-Forward' | player_position == 'Left Winger' |
+             player_position == 'Attacking Midfield')
+
+RF_Attacking <- randomForest(player_market_value_euro ~ .,
+                       data = Attacking2,
+                       type = regression,
+                       mtry = 4,
+                       na.action = na.roughfix,
+                       ntree = 1500)
+print(RF_Attacking)
+plot(RF_Attacking)
+
+{r}
+# All Variables
+rf_mods <- list()
+oob_err <- NULL
+test_err <- NULL
+for(mtry in 1:9){
+  rf_fit_attacking <- randomForest(player_market_value_euro ~ 
+                           ., 
+                         data = Attacking2,
+                         mtry = mtry,
+                         na.action = na.roughfix,
+                         ntree = 600)
+  oob_err[mtry] <- rf_fit_attacking$mse[600]
+  
+  cat(mtry," ")
+}
+## 1  2  3  4  5  6  7  8  9
+results_DF <- data.frame(mtry = 1:9, oob_err)
+ggplot(results_DF, aes(x = mtry, y = oob_err)) + geom_point() + theme_minimal() + xlim(1,9)
+
+
+{r}
+varImpPlot(RF_Attacking, n.var = 15)
+
+varImpPlot(RF_Attacking, n.var = 15)
+
