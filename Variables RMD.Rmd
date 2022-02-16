@@ -1,6 +1,6 @@
 ---
 title: "Variable Names"
-author: "Nicholas Kondo, "
+author: "Nicholas Kondo, Luke G, Darron K"
 subtitle: 
 output:
   html_document:
@@ -79,7 +79,7 @@ library(randomForest)
 
 For this study, data was collected from FBref.com on the "Big 5" Leagues. Our data includes statistics in categories such as standard, shooting, passing, goal and shot creation, defense, miscellaneous, playing time, and market values. We compare a player's statistics with their market values listed on TransferMarkt.com and find the statistics that are most correlated with a player's market values. In other words, we are aiming to find the certain statistics that makes a player valuable.
 
-```{r,include}
+```{r, include = FALSE}
 
 #Loading the data sets 
 
@@ -298,7 +298,7 @@ We created a unique identifier for each table and now it's time to filter our po
 
 1: `keepers`, `keepers_adv`, `playingtime`, `standard`, `market_values`
 
-2-6: `defense`, `possession`, `playingtime`, `passing`, `passingtypes`, `standard`, `market_values`
+2-5: `defense`, `possession`, `playingtime`, `passing`, `passingtypes`, `standard`, `market_values`
 
 7-11: `standard`, `shooting`, `gca`, `passing`, `passingtypes`, `possession`, `playingtime`, `market_values`
 
@@ -405,8 +405,9 @@ Attacking1 <- inner_join(x = Attacking1,
 Attacking1 <- Attacking1 %>% select(-contains("REMOVEDUPLICATE"))
 ```
 
-
 # Attacking
+
+### Random Forest
 
 ```{r}
 # Creating a table to remove all the factor variables with more than 40 factors
@@ -427,9 +428,9 @@ Attacking2 <- Attacking1 %>%
 RF_Attacking <- randomForest(player_market_value_euro ~ .,
                        data = Attacking2,
                        type = regression,
-                       mtry = 4,
+                       mtry = 5,
                        na.action = na.roughfix,
-                       ntree = 1500)
+                       ntree = 1000)
 print(RF_Attacking)
 plot(RF_Attacking)
 ```
@@ -453,99 +454,48 @@ for(mtry in 1:9){
 ## 1  2  3  4  5  6  7  8  9
 results_DF <- data.frame(mtry = 1:9, oob_err)
 ggplot(results_DF, aes(x = mtry, y = oob_err)) + geom_point() + theme_minimal() + xlim(1,9)
-beep(8)
 ```
 
-
-
-
-
-
-
-
-
-# Goalkeeper
+### Variable Importance Plot
 
 ```{r}
-# On minus off was not as correlated as plus per minus per 90 
-# onxGA had a higher correlation than GA
-# plus per minus per 90 was .05
-# plus per minus was actually more highly correlated with market price than plus per minus per 90 
-# .05 plus_per_minus_per_90
-# .22 plus per minus 
-# .23 xGplus_per_minus
-
-# onGA .08
-# onxG .10
-
-# .43 onxGa + xG plus per minus 
-# .47 xGplus_per_minus + onxGA + W
-
-# PSxG .1
-
-
-
-Goalkeepers_linreg <- lm(player_market_value_euro ~ xGplus_per_minus + onxG + W,
-                         data = Goalkeepers2)
-
-summary(Goalkeepers_linreg)
+varImpPlot(rf_fit_attacking, n.var = 15)
 ```
+
+**Important Variables**
+
+`GCA`: Goal Creating Actions
+
+`PPA`: Completed passes into the 18 yard box
+
+`xG +/-` : Expected Goals Scored minus Expected Goals Allowed
+
+### Linear Regression
 
 ```{r}
-library('randomForest')
+Attacking_LinReg <- lm(player_market_value_euro ~ GCA_GCA + PPA + xGplus_per_minus,
+                         data = Attacking2)
 
-Goalkeepers2 <- Goalkeepers1 %>% 
-    select(-region, -PlayerYearComp_id, -Url, -Season_End_Year, -Squad, -Player, -Nation, -Pos, -Age, -Born, -player_dob, -player_name, -player_num, -squad, 
-         -country, -comp_name, -player_nationality, -current_club, -player_height_mtrs, -date_joined, -joined_from, -contract_expiry, -player_url) %>% 
-    filter(player_position == 'Goalkeeper') %>% 
-    select(-player_position)
-
-rf_fit <- randomForest( player_market_value_euro ~ .,
-                       data = Goalkeepers2,
-                       type = regression,
-                       mtry = 3,
-                       na.action = na.roughfix,
-                       ntree = 600)
-
-print(rf_fit)
-
-plot(rf_fit)
+summary(Attacking_LinReg)
 ```
+### Interpretation
 
-```{r}
+The linear model has an adjusted R square of .42 
 
-rf_mods <- list()
-oob_err <- NULL
-test_err <- NULL
-for(mtry in 1:9){
-  rf_fit_nicholas_kondo <- randomForest(player_market_value_euro ~ 
-                           ., 
-                         data = Goalkeepers2,
-                         mtry = mtry,
-                         na.action = na.roughfix,
-                         ntree = 600)
-  oob_err[mtry] <- rf_fit_nicholas_kondo$mse[600]
-  
-  cat(mtry," ")
-}
-## 1  2  3  4  5  6  7  8  9
+For every goal creating action, a player's market value is usually 1.1 million euros higher.
 
-results_DF <- data.frame(mtry = 1:9, oob_err)
-ggplot(results_DF, aes(x = mtry, y = oob_err)) + geom_point() + theme_minimal() + xlim(1,9)
-```
+For every completed pass in the 18 yard box, a player's market value us usually 300K euros higher.
 
-Variable Importance Plot
+For every 1 point increase in xG +/-, a player's salary is typically 1.1 million euros higher.  
 
-```{r}
-varImpPlot(rf_fit_nicholas_kondo, n.var = 15)
-```
 
 # Defenders
+
+We removed defensive midfield from this group of defenders.  
 
 ### Random Forest
 
 ```{r}
-
 # Creating a table to remove all the factor variables with more than 40 factors
 # Filtering out positions 2 - 6 
 
@@ -558,44 +508,16 @@ Defenders2 <- Defenders1 %>%
            -current_club, -player_height_mtrs, -date_joined, -joined_from, 
            -contract_expiry, -player_url) %>% 
     filter(player_position == 'Right-Back' | player_position == 'Left-Back'| 
-           player_position == 'Centre-Back' | player_position == 'Defensive Midfield')
+           player_position == 'Centre-Back')
 
-RF_AllVariables <- randomForest(player_market_value_euro ~ .,
+RF_defending <- randomForest(player_market_value_euro ~ .,
                        data = Defenders2,
                        type = regression,
-                       mtry = 4,
+                       mtry = 5,
                        na.action = na.roughfix,
                        ntree = 1500)
-print(RF_AllVariables)
-plot(RF_AllVariables)
-
-# Let's look at the Defense table only 
-defenseOnly <- inner_join(x = defense,
-                             y = market_values,
-                             by = "PlayerYearComp_id",
-                             suffix = c("",".REMOVEDUPLICATE"))
-
-defenseOnly <- defenseOnly %>% select(-contains("REMOVEDUPLICATE"))
-
-
-defenseOnly1 <- defenseOnly %>% 
-  select(-Season_End_Year, -Squad, -Player, -Nation, -Pos, -Age, -Born, -Url, 
-         -PlayerYearComp_id, -region, -player_dob, -player_name, 
-           -player_num, -squad, -country, -comp_name, -player_nationality, 
-           -current_club, -player_height_mtrs, -date_joined, -joined_from, 
-           -contract_expiry, -player_url) %>% 
-    filter(player_position == 'Right-Back' | player_position == 'Left-Back'| 
-           player_position == 'Centre-Back' | player_position == 'Defensive Midfield')
-
-RF_DefenseVariables <- randomForest(player_market_value_euro ~ .,
-                       data = defenseOnly1,
-                       type = regression,
-                       mtry = 3,
-                       na.action = na.roughfix,
-                       ntree = 1500)
-
-print(RF_DefenseVariables)
-plot(RF_DefenseVariables)
+print(RF_defending)
+plot(RF_defending)
 ```
 
 ```{r}
@@ -604,32 +526,13 @@ rf_mods <- list()
 oob_err <- NULL
 test_err <- NULL
 for(mtry in 1:9){
-  rf_fit_all <- randomForest(player_market_value_euro ~ 
+  rf_fit_defending <- randomForest(player_market_value_euro ~ 
                            ., 
                          data = Defenders2,
                          mtry = mtry,
                          na.action = na.roughfix,
                          ntree = 600)
-  oob_err[mtry] <- rf_fit_all$mse[600]
-  
-  cat(mtry," ")
-}
-## 1  2  3  4  5  6  7  8  9
-results_DF <- data.frame(mtry = 1:9, oob_err)
-ggplot(results_DF, aes(x = mtry, y = oob_err)) + geom_point() + theme_minimal() + xlim(1,9)
-
-# Defense
-rf_mods <- list()
-oob_err <- NULL
-test_err <- NULL
-for(mtry in 1:9){
-  rf_fit_defense <- randomForest(player_market_value_euro ~ 
-                           ., 
-                         data = defenseOnly1,
-                         mtry = mtry,
-                         na.action = na.roughfix,
-                         ntree = 600)
-  oob_err[mtry] <- rf_fit_defense$mse[600]
+  oob_err[mtry] <- rf_fit_defending$mse[600]
   
   cat(mtry," ")
 }
@@ -638,39 +541,119 @@ results_DF <- data.frame(mtry = 1:9, oob_err)
 ggplot(results_DF, aes(x = mtry, y = oob_err)) + geom_point() + theme_minimal() + xlim(1,9)
 ```
 
+
+### Variable Importance Plot
 ```{r}
-varImpPlot(rf_fit_all, n.var = 15)
-
-varImpPlot(rf_fit_defense, n.var = 15)
-
+varImpPlot(rf_fit_defending, n.var = 15)
 ```
-
 **Important Variables**
 
-`W`: Wins
+`xG +/-`: Expected Goals minus expected goals allowed while on the pitch
 
-`onG`: Goals scored by team while on pitch
+`Comp`: League the player is in 
 
-`xG +/-` : Expected Goals Scored minus Expected Goals Allowed
+`Ground_Height` : Number of ground passes
 
-`CS`: Clean Ssheets
-
-`+/-`: Goals Scored minus Goals Allowed
+`TotDist`: Total distance in yards that completed passes have traveled in any direction 
 
 ### Linear Regression
 
 ```{r}
-Defenders_LinReg <- lm(player_market_value_euro ~ onG + CS + xGplus_per_minus,
-                         data = Goalkeepers2)
+Defending_LinReg <- lm(player_market_value_euro ~ xGplus_per_minus + Comp + Ground_Height + TotDist,
+                         data = Defenders2)
 
-summary(Defenders_LinReg)
+summary(Defending_LinReg)
 ```
 
-We have an adjusted R square of .46 with coefficients
+We have an adjusted R Square of .50.
 
+**More interpretation coming later on 
 
+# Goalkeeper 
 
-## Appendix
+## Random Forest 
+
+```{r}
+
+# Creating a table to remove all the factor variables with more than 40 factors
+# Filtering out positions 2 - 6 
+
+# All Variables
+
+Goalkeepers2 <- Goalkeepers1 %>% 
+    select(-region, -PlayerYearComp_id, -Url, -Season_End_Year, -Squad, 
+           -Player, -Nation, -Pos, -Age, -Born, -player_dob, -player_name, 
+           -player_num, -squad, -country, -comp_name, -player_nationality, 
+           -current_club, -player_height_mtrs, -date_joined, -joined_from, 
+           -contract_expiry, -player_url) %>% 
+    filter(player_position == 'Goalkeeper') 
+
+RF_Goalkeepers <- randomForest(player_market_value_euro ~ .,
+                       data = Goalkeepers2,
+                       type = regression,
+                       mtry = 4,
+                       na.action = na.roughfix,
+                       ntree = 1500)
+print(RF_Goalkeepers)
+plot(RF_Goalkeepers)
+```
+
+```{r}
+# All Variables
+rf_mods <- list()
+oob_err <- NULL
+test_err <- NULL
+for(mtry in 1:9){
+  rf_fit_goalkeeping <- randomForest(player_market_value_euro ~ 
+                           ., 
+                         data = Goalkeepers2,
+                         mtry = mtry,
+                         na.action = na.roughfix,
+                         ntree = 600)
+  oob_err[mtry] <- rf_fit_goalkeeping$mse[600]
+  
+  cat(mtry," ")
+}
+## 1  2  3  4  5  6  7  8  9
+results_DF <- data.frame(mtry = 1:9, oob_err)
+ggplot(results_DF, aes(x = mtry, y = oob_err)) + geom_point() + theme_minimal() + xlim(1,9)
+```
+
+## Variable Importance Plot
+
+```{r}
+varImpPlot(rf_fit_goalkeeping, n.var = 15)
+```
+**Important Variables** 
+
+`W`: Wins
+
+`plus_per_minus`: Goals scored minus goals allowed
+
+`onxG:` Goals created while on the pitch
+
+`CS`: Clean Sheets
+
+## Linear Regression
+
+```{r}
+
+Goalkeepers_linreg <- lm(player_market_value_euro ~ plus_per_minus + CS + W,
+                         data = Goalkeepers2)
+
+summary(Goalkeepers_linreg)
+```
+## Interpretation
+
+The adjusted R Square is .46.
+
+For every +/- point, a goal keepers salary is typically 85K more Euros.
+
+For every additional clean sheet, a goalie typically gets paid 82K higher. 
+
+For every additional win, a goalie is typically paid 9970K more.
+
+# Appendix
 
 ### Standard
 
@@ -1047,9 +1030,9 @@ We have an adjusted R square of .46 with coefficients
 
 `In_Outcomes`: Intercepted
 
-`Blocks_Outcomes`: Blocked by an opponent 
+`Blocks_Outcomes`: Blocked by an opponent
 
-### Goal and Shot Creation - Luke
+### Goal and Shot Creation
 
 `Season_End_Year`: The year at the end of the season.
 
@@ -1366,3 +1349,5 @@ We have an adjusted R square of .46 with coefficients
 `player_market_value_euro`: The valuation of the player in Euros
 
 `date_joined`: The date the player joined
+
+
